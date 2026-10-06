@@ -9,6 +9,7 @@ import type {
 import CardSearchResult from './components/CardSearchResult'
 import './App.css'
 import CardDetailsModal from './components/CardDetailsModal'
+import CollectionCard from './components/CollectionCard'
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -35,24 +36,42 @@ function handleAddToCollection(
     return
   }
 
-  const ownedCard: OwnedCard = {
-    id: `${card.id}-${variant.variantId}`,
-    cardId: card.id,
-    name: card.name,
-    image: card.image,
-    localId: card.localId,
-    set: {
-      id: card.set.id,
-      name: card.set.name,
-    },
-    variant,
-    quantity: 1,
-  }
+  const cardSet = card.set
 
-  setCollection((currentCollection) => [
-    ...currentCollection,
-    ownedCard,
-  ])
+  const ownedCardId = `${card.id}-${variant.variantId}`
+
+  setCollection((currentCollection) => {
+    const existingCard = currentCollection.find(
+      (ownedCard) => ownedCard.id === ownedCardId
+    )
+
+    if (existingCard) {
+      return currentCollection.map((ownedCard) =>
+        ownedCard.id === ownedCardId
+          ? {
+              ...ownedCard,
+              quantity: ownedCard.quantity + 1,
+            }
+          : ownedCard
+      )
+    }
+
+    const ownedCard: OwnedCard = {
+      id: ownedCardId,
+      cardId: card.id,
+      name: card.name,
+      image: card.image,
+      localId: card.localId,
+      set: {
+        id: cardSet.id,
+        name: cardSet.name,
+      },
+      variant,
+      quantity: 1,
+    }
+
+    return [...currentCollection, ownedCard]
+  })
 
   setSelectedCard(null)
 }
@@ -101,6 +120,34 @@ return (
         />
       ))}
     </section>
+
+    {collection.length > 0 && (
+  <section className="collection-section">
+    <div className="collection-header">
+      <div>
+        <p className="eyebrow">YOUR CARDS</p>
+        <h2>My Collection</h2>
+      </div>
+
+      <p className="collection-count">
+        {collection.reduce(
+          (total, card) => total + card.quantity,
+          0
+        )}{' '}
+        cards • {collection.length} unique
+      </p>
+    </div>
+
+    <div className="collection-grid">
+      {collection.map((card) => (
+        <CollectionCard
+          key={card.id}
+          card={card}
+        />
+      ))}
+    </div>
+  </section>
+)}
 
     {selectedCard && (
       <CardDetailsModal
