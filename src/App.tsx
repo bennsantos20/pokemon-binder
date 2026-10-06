@@ -22,17 +22,34 @@ function App() {
   useState<PokemonCardDetails | null>(null)
   const [selectedSlotId, setSelectedSlotId] =
   useState<string | null>(null)
-  const [firstBinderPage, setFirstBinderPage] =
-  useState<BinderPageType>(() => ({
-    id: 'page-1',
-    pageNumber: 1,
-    rows: 3,
-    columns: 3,
-    slots: Array.from({ length: 9 }, (_, index) => ({
-      id: `page-1-slot-${index + 1}`,
-      card: null,
-    })),
-  }))
+const [firstBinderPage, setFirstBinderPage] =
+  useState<BinderPageType>(() => {
+    const savedBinderPage = localStorage.getItem(
+      'pokemon-binder-page-1'
+    )
+
+    if (savedBinderPage) {
+      try {
+        return JSON.parse(savedBinderPage) as BinderPageType
+      } catch {
+        // Fall back to a fresh binder page
+      }
+    }
+
+    return {
+      id: 'page-1',
+      pageNumber: 1,
+      rows: 3,
+      columns: 3,
+      slots: Array.from({ length: 9 }, (_, index) => ({
+        id: `page-1-slot-${index + 1}`,
+        card: null,
+      })),
+    }
+  })
+
+
+
   const [collection, setCollection] = useState<OwnedCard[]>(() => {
   const savedCollection = localStorage.getItem('pokemon-binder-collection')
 
@@ -90,6 +107,13 @@ useEffect(() => {
     JSON.stringify(collection)
   )
 }, [collection])
+
+useEffect(() => {
+  localStorage.setItem(
+    'pokemon-binder-page-1',
+    JSON.stringify(firstBinderPage)
+  )
+}, [firstBinderPage])
 
 async function handleSearch() {
   const results = await searchCards(searchTerm)
