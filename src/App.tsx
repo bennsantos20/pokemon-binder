@@ -12,12 +12,15 @@ import './App.css'
 import CardDetailsModal from './components/CardDetailsModal'
 import CollectionCard from './components/CollectionCard'
 import BinderSpread from './components/BinderSpread'
+import BinderCardPicker from './components/BinderCardPicker'
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [cards, setCards] = useState<PokemonCard[]>([])
   const [selectedCard, setSelectedCard] =
   useState<PokemonCardDetails | null>(null)
+  const [selectedSlotId, setSelectedSlotId] =
+  useState<string | null>(null)
   const firstBinderPage: BinderPageType = {
   id: 'page-1',
   pageNumber: 1,
@@ -31,6 +34,7 @@ function App() {
   const [collection, setCollection] = useState<OwnedCard[]>(() => {
   const savedCollection = localStorage.getItem('pokemon-binder-collection')
 
+
   if (!savedCollection) {
     return []
   }
@@ -41,6 +45,12 @@ function App() {
     return []
   }
 })
+
+function handleBinderSlotClick(slotId: string) {
+  setSelectedSlotId(slotId)
+}
+
+
 
 useEffect(() => {
   localStorage.setItem(
@@ -186,8 +196,19 @@ return (
           <h2>My Binder</h2>
         </div>
 
-         <BinderSpread rightPage={firstBinderPage} />
+         <BinderSpread
+          rightPage={firstBinderPage}
+          onSlotClick={handleBinderSlotClick}
+          />
+
       </section>
+
+    {selectedSlotId && (
+      <BinderCardPicker
+        slotId={selectedSlotId}
+        onClose={() => setSelectedSlotId(null)}
+      />
+    )}
 
     {selectedCard && (
       <CardDetailsModal

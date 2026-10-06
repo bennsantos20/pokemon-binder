@@ -2,9 +2,14 @@ import type { BinderPage as BinderPageType } from '../types/PokemonCards'
 
 interface BinderPageProps {
   page: BinderPageType
+  onSlotClick?: (slotId: string) => void
 }
 
-function BinderPage({ page }: BinderPageProps) {
+function BinderPage({
+     page,
+    onSlotClick,
+}: BinderPageProps) {
+
   return (
     <section className="binder-page">
       <div
@@ -19,6 +24,7 @@ function BinderPage({ page }: BinderPageProps) {
             className="binder-pocket"
             type="button"
             key={slot.id}
+            onClick={() => onSlotClick?.(slot.id)}
           >
             {slot.card ? (
               <img
