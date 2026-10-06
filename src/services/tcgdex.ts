@@ -1,4 +1,7 @@
-import type { PokemonCard } from '../types/PokemonCards'
+import type {
+  PokemonCard,
+  PokemonCardDetails,
+} from '../types/PokemonCards'
 
 const API_BASE_URL = 'https://api.tcgdex.net/v2/en'
 
@@ -16,7 +19,9 @@ export async function searchCards(name: string): Promise<PokemonCard[]> {
   return cards
 }
 
-export async function getCardById(id: string) {
+export async function getCardById(
+  id: string
+): Promise<PokemonCardDetails> {
   const response = await fetch(
     `${API_BASE_URL}/cards/${encodeURIComponent(id)}`
   )
