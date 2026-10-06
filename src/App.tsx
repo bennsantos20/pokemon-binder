@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getCardById, searchCards } from './services/tcgdex'
 import type { 
   CardVariant,
@@ -16,7 +16,26 @@ function App() {
   const [cards, setCards] = useState<PokemonCard[]>([])
   const [selectedCard, setSelectedCard] =
   useState<PokemonCardDetails | null>(null)
-  const [collection, setCollection] = useState<OwnedCard[]>([])
+  const [collection, setCollection] = useState<OwnedCard[]>(() => {
+  const savedCollection = localStorage.getItem('pokemon-binder-collection')
+
+  if (!savedCollection) {
+    return []
+  }
+
+  try {
+    return JSON.parse(savedCollection) as OwnedCard[]
+  } catch {
+    return []
+  }
+})
+
+useEffect(() => {
+  localStorage.setItem(
+    'pokemon-binder-collection',
+    JSON.stringify(collection)
+  )
+}, [collection])
 
 async function handleSearch() {
   const results = await searchCards(searchTerm)
