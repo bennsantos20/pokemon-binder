@@ -36,7 +36,9 @@ function BinderSpread({
           onSlotClick={onSlotClick}
            />
         ) : (
-          <div className="binder-empty-side" />
+          <div className="binder-inside-cover">
+            <p>Pokémon Binder</p>
+            </div>
         )}
       </div>
     </div>

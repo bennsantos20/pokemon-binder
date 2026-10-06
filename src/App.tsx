@@ -21,32 +21,85 @@ function App() {
   const [selectedCard, setSelectedCard] =
   useState<PokemonCardDetails | null>(null)
   const [selectedSlotId, setSelectedSlotId] =
-  useState<string | null>(null)
-const [firstBinderPage, setFirstBinderPage] =
-  useState<BinderPageType>(() => {
+    useState<string | null>(null)
+  const [currentSpread, setCurrentSpread] = useState(0)
+
+  
+function createBinderPage(pageNumber: number): BinderPageType {
+  return {
+    id: `page-${pageNumber}`,
+    pageNumber,
+    rows: 3,
+    columns: 3,
+    slots: Array.from({ length: 9 }, (_, index) => ({
+      id: `page-${pageNumber}-slot-${index + 1}`,
+      card: null,
+    })),
+  }
+}
+
+const [binderPages, setBinderPages] =
+  useState<BinderPageType[]>(() => {
+    const savedBinderPages = localStorage.getItem(
+      'pokemon-binder-pages'
+    )
+
+    if (savedBinderPages) {
+      try {
+        const pages = JSON.parse(
+          savedBinderPages
+        ) as BinderPageType[]
+
+        while (pages.length < 40) {
+          pages.push(createBinderPage(pages.length + 1))
+        }
+
+    return pages
+  } catch {
+    // Try the old single-page save instead
+  }
+}
+
+
     const savedBinderPage = localStorage.getItem(
       'pokemon-binder-page-1'
     )
 
     if (savedBinderPage) {
       try {
-        return JSON.parse(savedBinderPage) as BinderPageType
+        const page = JSON.parse(
+          savedBinderPage
+        ) as BinderPageType
+
+        return [page]
       } catch {
-        // Fall back to a fresh binder page
+        // Fall back to a fresh binder
       }
     }
 
-    return {
-      id: 'page-1',
-      pageNumber: 1,
-      rows: 3,
-      columns: 3,
-      slots: Array.from({ length: 9 }, (_, index) => ({
-        id: `page-1-slot-${index + 1}`,
-        card: null,
-      })),
-    }
+    return [
+      {
+        id: 'page-1',
+        pageNumber: 1,
+        rows: 3,
+        columns: 3,
+        slots: Array.from({ length: 9 }, (_, index) => ({
+          id: `page-1-slot-${index + 1}`,
+          card: null,
+        })),
+      },
+    ]
   })
+
+  const leftPage =
+  currentSpread === 0
+    ? undefined
+    : binderPages[currentSpread * 2 - 1]
+
+const rightPage =
+  currentSpread === 0
+    ? binderPages[0]
+    : binderPages[currentSpread * 2]
 
 
 
@@ -88,14 +141,16 @@ function handlePlaceCardInBinder(
     variant,
   }
 
-  setFirstBinderPage((currentPage) => ({
-    ...currentPage,
-    slots: currentPage.slots.map((slot) =>
+setBinderPages((currentPages) =>
+  currentPages.map((page) => ({
+    ...page,
+    slots: page.slots.map((slot) =>
       slot.id === selectedSlotId
         ? { ...slot, card: binderCard }
         : slot
     ),
   }))
+)
 
   setSelectedSlotId(null)
 }
@@ -110,10 +165,10 @@ useEffect(() => {
 
 useEffect(() => {
   localStorage.setItem(
-    'pokemon-binder-page-1',
-    JSON.stringify(firstBinderPage)
+    'pokemon-binder-pages',
+    JSON.stringify(binderPages)
   )
-}, [firstBinderPage])
+}, [binderPages])
 
 async function handleSearch() {
   const results = await searchCards(searchTerm)
@@ -253,9 +308,66 @@ return (
         </div>
 
          <BinderSpread
-          rightPage={firstBinderPage}
+          leftPage={leftPage}
+          rightPage={rightPage}
           onSlotClick={handleBinderSlotClick}
           />
+
+          <div className="binder-navigation">
+            <button
+              type="button"
+              onClick={() =>
+              setCurrentSpread((spread) =>
+                spread === 0
+                  ? Math.ceil(binderPages.length / 2)
+                  : spread - 1
+              )
+            }
+          >
+            {currentSpread === 0 ? '↺ Back' : '← Previous'}
+          </button>
+
+          <select
+            className="binder-page-selector"
+            value={currentSpread}
+            onChange={(event) =>
+            setCurrentSpread(Number(event.target.value))
+            }
+          >
+          {Array.from(
+            { length: Math.ceil(binderPages.length / 2) + 1 },
+            (_, spread) => {
+              const label =
+                spread === 0
+                  ? 'Front / Page 1'
+                  : spread === Math.ceil(binderPages.length / 2)
+                    ? `Page ${binderPages.length} / Back`
+                    : `Pages ${spread * 2}–${spread * 2 + 1}`
+
+              return (
+                <option key={spread} value={spread}>
+                  {label}
+              </option>
+      )
+    }
+  )}
+</select>
+
+            <button
+              type="button"
+              onClick={() =>
+              setCurrentSpread((spread) =>
+              spread === Math.ceil(binderPages.length / 2)
+                ? 0
+                : spread + 1
+              )
+            }
+            >
+              {currentSpread === Math.ceil(binderPages.length / 2)
+                ? 'Front ↻'
+                : 'Next →'}
+            </button>
+          </div>
 
       </section>
 
