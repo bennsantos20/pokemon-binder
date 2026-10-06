@@ -5,12 +5,17 @@ interface BinderSpreadProps {
   leftPage?: BinderPageType
   rightPage?: BinderPageType
   onSlotClick?: (slotId: string) => void
+  onDragStart?: (slotId: string) => void
+  onDrop?: (slotId: string) => void
 }
 
 function BinderSpread({
   leftPage,
   rightPage,
   onSlotClick,
+  onDragStart,
+  onDrop,
+
 }: BinderSpreadProps) {
   return (
     <div className="binder-spread">
@@ -19,6 +24,8 @@ function BinderSpread({
           <BinderPage
           page={leftPage}
           onSlotClick={onSlotClick}
+          onDragStart={onDragStart}
+          onDrop={onDrop}
           />
         ) : (
           <div className="binder-inside-cover">
@@ -34,7 +41,9 @@ function BinderSpread({
           <BinderPage
           page={rightPage}
           onSlotClick={onSlotClick}
-           />
+          onDragStart={onDragStart}
+          onDrop={onDrop}
+            />
         ) : (
           <div className="binder-inside-cover">
             <p>Pokémon Binder</p>

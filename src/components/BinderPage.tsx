@@ -3,11 +3,15 @@ import type { BinderPage as BinderPageType } from '../types/PokemonCards'
 interface BinderPageProps {
   page: BinderPageType
   onSlotClick?: (slotId: string) => void
+  onDragStart?: (slotId: string) => void
+  onDrop?: (slotId: string) => void
 }
 
 function BinderPage({
      page,
     onSlotClick,
+    onDragStart,
+    onDrop,
 }: BinderPageProps) {
 
   return (
@@ -25,6 +29,19 @@ function BinderPage({
             type="button"
             key={slot.id}
             onClick={() => onSlotClick?.(slot.id)}
+            draggable={Boolean(slot.card)}
+            onDragStart={() => {
+                if (slot.card) {
+                    onDragStart?.(slot.id)
+                }
+            }}
+            onDragOver={(event) => {
+                event.preventDefault()
+            }}
+
+            onDrop={() => {
+                onDrop?.(slot.id)
+            }}
           >
             {slot.card ? (
               <img

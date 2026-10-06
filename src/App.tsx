@@ -18,11 +18,16 @@ import BinderCardPicker from './components/BinderCardPicker'
 function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [cards, setCards] = useState<PokemonCard[]>([])
+  
   const [selectedCard, setSelectedCard] =
   useState<PokemonCardDetails | null>(null)
+  
   const [selectedSlotId, setSelectedSlotId] =
     useState<string | null>(null)
-  const [currentSpread, setCurrentSpread] = useState(0)
+  
+    const [currentSpread, setCurrentSpread] = useState(0)
+    const [draggedSlotId, setDraggedSlotId] =
+  useState<string | null>(null)
 
   
 function createBinderPage(pageNumber: number): BinderPageType {
@@ -120,6 +125,53 @@ const rightPage =
 
 function handleBinderSlotClick(slotId: string) {
   setSelectedSlotId(slotId)
+}
+
+function handleBinderDragStart(slotId: string) {
+  setDraggedSlotId(slotId)
+}
+
+function handleBinderDrop(targetSlotId: string) {
+  if (!draggedSlotId || draggedSlotId === targetSlotId) {
+    setDraggedSlotId(null)
+    return
+  }
+
+  setBinderPages((currentPages) => {
+    const allSlots = currentPages.flatMap((page) => page.slots)
+
+    const sourceSlot = allSlots.find(
+      (slot) => slot.id === draggedSlotId
+    )
+
+    const targetSlot = allSlots.find(
+      (slot) => slot.id === targetSlotId
+    )
+
+    if (!sourceSlot?.card || !targetSlot) {
+      return currentPages
+    }
+
+    const sourceCard = sourceSlot.card
+    const targetCard = targetSlot.card
+
+    return currentPages.map((page) => ({
+      ...page,
+      slots: page.slots.map((slot) => {
+        if (slot.id === draggedSlotId) {
+          return { ...slot, card: targetCard }
+        }
+
+        if (slot.id === targetSlotId) {
+          return { ...slot, card: sourceCard }
+        }
+
+        return slot
+      }),
+    }))
+  })
+
+  setDraggedSlotId(null)
 }
 
 function handlePlaceCardInBinder(
@@ -311,6 +363,8 @@ return (
           leftPage={leftPage}
           rightPage={rightPage}
           onSlotClick={handleBinderSlotClick}
+          onDragStart={handleBinderDragStart}
+          onDrop={handleBinderDrop}
           />
 
           <div className="binder-navigation">
