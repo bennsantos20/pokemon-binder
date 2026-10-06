@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getCardById, searchCards } from './services/tcgdex'
 import type { 
+  BinderCard,
   BinderPage as BinderPageType,
   CardVariant,
   OwnedCard,
@@ -21,16 +22,17 @@ function App() {
   useState<PokemonCardDetails | null>(null)
   const [selectedSlotId, setSelectedSlotId] =
   useState<string | null>(null)
-  const firstBinderPage: BinderPageType = {
-  id: 'page-1',
-  pageNumber: 1,
-  rows: 3,
-  columns: 3,
-  slots: Array.from({ length: 9 }, (_, index) => ({
-    id: `page-1-slot-${index + 1}`,
-    card: null,
-  })),
-}
+  const [firstBinderPage, setFirstBinderPage] =
+  useState<BinderPageType>(() => ({
+    id: 'page-1',
+    pageNumber: 1,
+    rows: 3,
+    columns: 3,
+    slots: Array.from({ length: 9 }, (_, index) => ({
+      id: `page-1-slot-${index + 1}`,
+      card: null,
+    })),
+  }))
   const [collection, setCollection] = useState<OwnedCard[]>(() => {
   const savedCollection = localStorage.getItem('pokemon-binder-collection')
 
@@ -50,6 +52,36 @@ function handleBinderSlotClick(slotId: string) {
   setSelectedSlotId(slotId)
 }
 
+function handlePlaceCardInBinder(
+  card: PokemonCardDetails,
+  variant: CardVariant
+) {
+  if (!selectedSlotId || !card.set) return
+
+  const binderCard: BinderCard = {
+    id: `${card.id}-${variant.variantId}`,
+    cardId: card.id,
+    name: card.name,
+    image: card.image,
+    localId: card.localId,
+    set: {
+      id: card.set.id,
+      name: card.set.name,
+    },
+    variant,
+  }
+
+  setFirstBinderPage((currentPage) => ({
+    ...currentPage,
+    slots: currentPage.slots.map((slot) =>
+      slot.id === selectedSlotId
+        ? { ...slot, card: binderCard }
+        : slot
+    ),
+  }))
+
+  setSelectedSlotId(null)
+}
 
 
 useEffect(() => {
@@ -207,6 +239,7 @@ return (
       <BinderCardPicker
         slotId={selectedSlotId}
         onClose={() => setSelectedSlotId(null)}
+        onPlaceCard={handlePlaceCardInBinder}
       />
     )}
 

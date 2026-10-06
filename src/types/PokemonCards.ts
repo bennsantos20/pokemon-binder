@@ -38,9 +38,22 @@ export interface OwnedCard {
   quantity: number
 }
 
+export interface BinderCard {
+  id: string
+  cardId: string
+  name: string
+  image?: string
+  localId: string
+  set: {
+    id: string
+    name: string
+  }
+  variant: CardVariant
+}
+
 export interface BinderSlot {
   id: string
-  card: OwnedCard | null
+  card: BinderCard | null
 }
 
 export interface BinderPage {

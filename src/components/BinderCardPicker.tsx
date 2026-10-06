@@ -1,21 +1,39 @@
 import { useState } from 'react'
-import { searchCards } from '../services/tcgdex'
-import type { PokemonCard } from '../types/PokemonCards'
+import { 
+    getCardById,
+    searchCards,
+} from '../services/tcgdex'
+import type {
+    CardVariant,
+    PokemonCard,
+    PokemonCardDetails,
+} from '../types/PokemonCards'
 
 interface BinderCardPickerProps {
   slotId: string
   onClose: () => void
+  onPlaceCard: (
+    card: PokemonCardDetails,
+    variant: CardVariant
+  ) => void
 }
 
 function BinderCardPicker({
   slotId,
   onClose,
+  onPlaceCard,
 }: BinderCardPickerProps) {
     const [view, setView] = useState<'options' | 'search'>('options')
 
     const [searchTerm, setSearchTerm] = useState('')
     const [searchResults, setSearchResults] = useState<PokemonCard[]>([])
     const [isSearching, setIsSearching] = useState(false)
+    const [selectedCard, setSelectedCard] =
+        useState<PokemonCardDetails | null>(null)
+
+    const [isLoadingCard, setIsLoadingCard] = useState(false)
+    const [selectedVariant, setSelectedVariant] =
+        useState<CardVariant | null>(null)
 
     async function handleSearch() {
   if (!searchTerm.trim()) {
@@ -32,6 +50,18 @@ function BinderCardPicker({
   }
 }
 
+async function handleCardSelect(card: PokemonCard) {
+  setIsLoadingCard(true)
+
+  try {
+    const details = await getCardById(card.id)
+
+    setSelectedCard(details)
+    setSelectedVariant(details.variants_detailed?.[0] ?? null)
+  } finally {
+    setIsLoadingCard(false)
+  }
+}
     
   return (
     <div
@@ -95,7 +125,79 @@ function BinderCardPicker({
           </button>
         </div>
     ) : (
-  <div>
+  selectedCard ? (
+    <div className="binder-placement-preview">
+      <button
+        type="button"
+        onClick={() => {
+          setSelectedCard(null)
+          setSelectedVariant(null)
+        }}
+      >
+        ← Back to results
+      </button>
+
+      <div className="binder-placement-card">
+        {selectedCard.image && (
+          <img
+            src={`${selectedCard.image}/high.webp`}
+            alt={selectedCard.name}
+          />
+        )}
+
+        <div className="binder-placement-info">
+          <p className="eyebrow">
+            {selectedCard.set?.name ?? 'Pokémon Card'}
+          </p>
+
+          <h3>{selectedCard.name}</h3>
+
+          <p>
+            #{selectedCard.localId}
+            {selectedCard.rarity
+              ? ` • ${selectedCard.rarity}`
+              : ''}
+          </p>
+
+          <h4>Choose Variant</h4>
+
+          <div className="binder-variant-options">
+            {selectedCard.variants_detailed?.map((variant) => (
+              <button
+                type="button"
+                key={variant.variantId}
+                className={
+                  selectedVariant?.variantId === variant.variantId
+                    ? 'binder-variant-option selected'
+                    : 'binder-variant-option'
+                }
+                onClick={() => setSelectedVariant(variant)}
+              >
+                {variant.type}
+              </button>
+            ))}
+          </div>
+        <button
+            className="binder-place-card-button"
+            type="button"
+            disabled={!selectedVariant}
+            onClick={() => {
+                if (selectedVariant) {
+                    onPlaceCard(selectedCard, selectedVariant)
+                }
+            }}
+        >
+            Place in Binder
+        </button>
+
+
+
+
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div>
     <button
       type="button"
       onClick={() => setView('options')}
@@ -141,6 +243,8 @@ function BinderCardPicker({
         className="binder-search-result"
         type="button"
         key={card.id}
+        onClick={() => handleCardSelect(card)}
+        disabled={isLoadingCard}
       >
         {card.image ? (
           <img
@@ -164,7 +268,7 @@ function BinderCardPicker({
 
 
   </div>
-)}
+))}
 
 
 
