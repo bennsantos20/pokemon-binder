@@ -674,3 +674,331 @@
     gap: 12px;
   }
 }
+
+/* Binder Designer */
+
+.binder-section {
+  margin-top: 72px;
+  padding-top: 40px;
+
+  border-top: 1px solid #2e3036;
+}
+
+.binder-section-header {
+  margin-bottom: 24px;
+}
+
+.binder-section-header .eyebrow {
+  margin-bottom: 6px;
+}
+
+.binder-section-header h2 {
+  margin: 0;
+
+  color: #f5f5f5;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+}
+
+/* Binder Page */
+
+.binder-page {
+  width: min(620px, 100%);
+
+  padding: 28px 28px 18px;
+
+  background: #a9c9a8;
+
+  border: 1px solid #bdd7bc;
+  border-radius: 24px;
+
+  box-shadow:
+    0 24px 50px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.binder-pocket-grid {
+  display: grid;
+  gap: 16px;
+
+  padding: 18px;
+
+  background: rgba(232, 243, 231, 0.32);
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 18px;
+
+  box-shadow:
+    inset 0 2px 8px rgba(55, 78, 57, 0.12);
+}
+
+.binder-pocket {
+  position: relative;
+
+  width: 100%;
+  aspect-ratio: 2.5 / 3.5;
+
+  padding: 6px;
+
+  overflow: hidden;
+
+  color: #55705a;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.28),
+      rgba(255, 255, 255, 0.08)
+    );
+
+  border: 1px solid rgba(77, 106, 80, 0.28);
+  border-radius: 10px;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 3px 8px rgba(55, 78, 57, 0.12);
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.binder-pocket:hover {
+  transform: translateY(-2px);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.4),
+      rgba(255, 255, 255, 0.12)
+    );
+
+  border-color: rgba(65, 93, 68, 0.5);
+}
+
+.binder-pocket img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  border-radius: 7px;
+}
+
+.empty-pocket {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  width: 100%;
+  height: 100%;
+
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.empty-pocket-plus {
+  display: grid;
+  place-items: center;
+
+  width: 32px;
+  height: 32px;
+
+  color: #54705a;
+
+  border: 1px solid rgba(73, 101, 76, 0.38);
+  border-radius: 50%;
+
+  font-size: 1.25rem;
+  font-weight: 400;
+}
+
+.binder-page-number {
+  margin: 14px 4px 0;
+
+  color: #4f6854;
+
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* Binder Mobile */
+
+@media (max-width: 600px) {
+  .binder-page {
+    padding: 16px 16px 12px;
+
+    border-radius: 18px;
+  }
+
+  .binder-pocket-grid {
+    gap: 8px;
+
+    padding: 10px;
+
+    border-radius: 13px;
+  }
+
+  .binder-pocket {
+    padding: 3px;
+    border-radius: 7px;
+  }
+
+  .empty-pocket {
+    gap: 4px;
+    font-size: 0.55rem;
+  }
+
+  .empty-pocket-plus {
+    width: 25px;
+    height: 25px;
+
+    font-size: 1rem;
+  }
+}
+
+/* Open Binder Spread */
+
+.binder-spread {
+  position: relative;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 22px;
+
+  background: #91b492;
+
+  border: 1px solid #aecbad;
+  border-radius: 30px;
+
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.binder-spread-side {
+  min-width: 0;
+}
+
+.binder-spread-left {
+  padding-right: 8px;
+}
+
+.binder-spread-right {
+  padding-left: 8px;
+}
+
+/* Ringless center binding */
+
+.binder-spine {
+  position: relative;
+
+  width: 18px;
+  min-height: 100%;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(54, 78, 57, 0.18),
+      rgba(255, 255, 255, 0.14) 45%,
+      rgba(54, 78, 57, 0.22)
+    );
+
+  border-radius: 999px;
+
+  box-shadow:
+    inset 4px 0 7px rgba(48, 70, 51, 0.12),
+    inset -4px 0 7px rgba(48, 70, 51, 0.16);
+}
+
+/* Inside of the front cover */
+
+.binder-inside-cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 100%;
+  min-height: 610px;
+
+  padding: 40px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.12),
+      rgba(73, 103, 77, 0.08)
+    );
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 22px 10px 10px 22px;
+
+  box-shadow:
+    inset -12px 0 22px rgba(62, 88, 65, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.binder-inside-cover p {
+  margin: 0;
+
+  color: rgba(63, 89, 67, 0.48);
+
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* Make the individual page fit inside the spread */
+
+.binder-spread .binder-page {
+  width: 100%;
+  height: 100%;
+
+  border-radius: 10px 22px 22px 10px;
+}
+
+.binder-spread-left .binder-page {
+  border-radius: 22px 10px 10px 22px;
+}
+
+.binder-empty-side {
+  min-height: 610px;
+}
+
+/* Open Binder Mobile */
+
+@media (max-width: 800px) {
+  .binder-spread {
+    display: block;
+
+    padding: 14px;
+
+    border-radius: 22px;
+  }
+
+  .binder-spread-left {
+    display: none;
+  }
+
+  .binder-spread-right {
+    padding: 0;
+  }
+
+  .binder-spine {
+    display: none;
+  }
+
+  .binder-spread .binder-page {
+    border-radius: 16px;
+  }
+}

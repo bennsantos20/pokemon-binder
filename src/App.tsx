@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getCardById, searchCards } from './services/tcgdex'
 import type { 
+  BinderPage as BinderPageType,
   CardVariant,
   OwnedCard,
   PokemonCard,
@@ -10,12 +11,23 @@ import CardSearchResult from './components/CardSearchResult'
 import './App.css'
 import CardDetailsModal from './components/CardDetailsModal'
 import CollectionCard from './components/CollectionCard'
+import BinderSpread from './components/BinderSpread'
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [cards, setCards] = useState<PokemonCard[]>([])
   const [selectedCard, setSelectedCard] =
   useState<PokemonCardDetails | null>(null)
+  const firstBinderPage: BinderPageType = {
+  id: 'page-1',
+  pageNumber: 1,
+  rows: 3,
+  columns: 3,
+  slots: Array.from({ length: 9 }, (_, index) => ({
+    id: `page-1-slot-${index + 1}`,
+    card: null,
+  })),
+}
   const [collection, setCollection] = useState<OwnedCard[]>(() => {
   const savedCollection = localStorage.getItem('pokemon-binder-collection')
 
@@ -167,6 +179,15 @@ return (
     </div>
   </section>
 )}
+
+      <section className="binder-section">
+        <div className="binder-section-header">
+          <p className="eyebrow">BINDER DESIGNER</p>
+          <h2>My Binder</h2>
+        </div>
+
+         <BinderSpread rightPage={firstBinderPage} />
+      </section>
 
     {selectedCard && (
       <CardDetailsModal

@@ -37,3 +37,23 @@ export interface OwnedCard {
   variant: CardVariant
   quantity: number
 }
+
+export interface BinderSlot {
+  id: string
+  card: OwnedCard | null
+}
+
+export interface BinderPage {
+  id: string
+  pageNumber: number
+  rows: number
+  columns: number
+  slots: BinderSlot[]
+}
+
+export interface Binder {
+  id: string
+  name: string
+  color: string
+  pages: BinderPage[]
+}
