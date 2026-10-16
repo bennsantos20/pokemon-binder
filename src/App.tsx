@@ -15,12 +15,35 @@ import CollectionCard from './components/CollectionCard'
 import BinderSpread from './components/BinderSpread'
 import BinderCardPicker from './components/BinderCardPicker'
 import BinderCardActions from './components/BinderCardActions'
+import CollectionCardActions from './components/CollectionCardActions'
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [cards, setCards] = useState<PokemonCard[]>([])
   const [isCollectionExpanded, setIsCollectionExpanded] = useState(false)
+  const [mainCollectionSearch, setMainCollectionSearch] = useState('')
+  const [mainCollectionDisplay, setMainCollectionDisplay] =
+    useState<'grid' | 'list'>('grid')
+  const [selectedManageCard, setSelectedManageCard] =
+    useState<OwnedCard | null>(null)
+
+  const [selectedBinderLocations, setSelectedBinderLocations] =
+  useState<{ pageNumber: number; slotNumber: number }[] | null>(null)
   
+  const [mainCollectionSetFilter, setMainCollectionSetFilter] =
+  useState('all')
+
+const [mainCollectionVariantFilter, setMainCollectionVariantFilter] =
+  useState('all')
+
+const [mainCollectionSort, setMainCollectionSort] =
+  useState<'name' | 'set'>('name')
+
+const MAIN_COLLECTION_PAGE_SIZE = 24
+
+const [visibleMainCollectionCount, setVisibleMainCollectionCount] =
+  useState(MAIN_COLLECTION_PAGE_SIZE)
+
   const [selectedCard, setSelectedCard] =
   useState<PokemonCardDetails | null>(null)
   
@@ -114,6 +137,59 @@ const [binderPages, setBinderPages] =
   const selectedOccupiedSlot = binderPages
   .flatMap((page) => page.slots)
   .find((slot) => slot.id === selectedOccupiedSlotId)
+
+  function getBinderPlacements(card: OwnedCard) {
+  return binderPages.flatMap((page) =>
+    page.slots.flatMap((slot, slotIndex) => {
+      if (!slot.card) return []
+
+      const matchesCard =
+        slot.card.cardId === card.cardId &&
+        slot.card.variant.variantId === card.variant.variantId
+
+      if (!matchesCard) return []
+
+      return [
+        {
+          pageNumber: page.pageNumber,
+          slotNumber: slotIndex + 1,
+        },
+      ]
+    })
+  )
+}
+
+function handleJumpToBinderPage(pageNumber: number) {
+  const targetSpread = Math.floor(pageNumber / 2)
+
+  setCurrentSpread(targetSpread)
+
+  setSelectedManageCard(null)
+  setSelectedSlotId(null)
+  setSelectedOccupiedSlotId(null)
+
+  requestAnimationFrame(() => {
+    document
+      .querySelector('.binder-section')
+      ?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+  })
+}
+
+function handleBinderIndicatorClick(
+  placements: { pageNumber: number; slotNumber: number }[]
+) {
+  if (placements.length === 0) return
+
+  if (placements.length === 1) {
+    handleJumpToBinderPage(placements[0].pageNumber)
+    return
+  }
+
+  setSelectedBinderLocations(placements)
+}
 
   const leftPage =
   currentSpread === 0
@@ -380,6 +456,91 @@ function handleAddToCollection(
   setSelectedCard(null)
 }
 
+function handleUpdateCollectionQuantity(quantity: number) {
+  if (!selectedManageCard) return
+  if (!Number.isSafeInteger(quantity) || quantity < 1) return
+
+  setCollection((currentCollection) =>
+    currentCollection.map((card) =>
+      card.id === selectedManageCard.id
+        ? { ...card, quantity }
+        : card
+    )
+  )
+
+  setSelectedManageCard(null)
+}
+
+
+function handleRemoveFromCollection() {
+  if (!selectedManageCard) return
+
+  const confirmed = window.confirm(
+    `Remove ${selectedManageCard.name} (${selectedManageCard.set.name}) from your collection?\n\nThis will remove all ${selectedManageCard.quantity} owned copies of this entry. Cards already placed in your binder will stay there.`
+  )
+
+  if (!confirmed) return
+
+  setCollection((currentCollection) =>
+    currentCollection.filter(
+      (card) => card.id !== selectedManageCard.id
+    )
+  )
+
+  setSelectedManageCard(null)
+}
+
+
+const mainCollectionSets = Array.from(
+  new Set(collection.map((card) => card.set.name))
+).sort((a, b) => a.localeCompare(b))
+
+const mainCollectionVariants = Array.from(
+  new Set(collection.map((card) => card.variant.type))
+).sort((a, b) => a.localeCompare(b))
+
+const filteredMainCollection = collection
+  .filter((card) => {
+    const search = mainCollectionSearch.toLowerCase().trim()
+
+    const matchesSearch =
+      card.name.toLowerCase().includes(search) ||
+      card.set.name.toLowerCase().includes(search) ||
+      card.variant.type.toLowerCase().includes(search) ||
+      card.localId.toLowerCase().includes(search)
+
+    const matchesSet =
+      mainCollectionSetFilter === 'all' ||
+      card.set.name === mainCollectionSetFilter
+
+    const matchesVariant =
+      mainCollectionVariantFilter === 'all' ||
+      card.variant.type === mainCollectionVariantFilter
+
+    return matchesSearch && matchesSet && matchesVariant
+  })
+  .sort((a, b) => {
+    if (mainCollectionSort === 'set') {
+      return (
+        a.set.name.localeCompare(b.set.name) ||
+        a.name.localeCompare(b.name)
+      )
+    }
+
+    return (
+      a.name.localeCompare(b.name) ||
+      a.set.name.localeCompare(b.set.name)
+    )
+  })
+
+const visibleMainCollection = filteredMainCollection.slice(
+  0,
+  visibleMainCollectionCount
+)
+
+const hasMoreMainCollectionCards =
+  visibleMainCollectionCount < filteredMainCollection.length
+
 return (
   <main
     className={`app ${isPreviewMode ? 'app-preview' : ''} ${
@@ -445,26 +606,192 @@ return (
         </p>
       </div>
 
-      <button
+     <button
         type="button"
+        className="collection-toggle-button"
         onClick={() => setIsCollectionExpanded((current) => !current)}
         aria-expanded={isCollectionExpanded}
         aria-controls="main-collection-content"
-      >
-        {isCollectionExpanded ? '▲ Collapse' : '▼ Expand'}
+    >
+      <span>{isCollectionExpanded ? 'Hide Cards' : 'View Collection'}</span>
+      <span aria-hidden="true">
+        {isCollectionExpanded ? '▲' : '▼'}
+      </span>
       </button>
     </div>
 
-    {isCollectionExpanded && (
-      <div id="main-collection-content">
-        <div className="collection-grid">
-          {collection.map((card) => (
+   {isCollectionExpanded && (
+  <div
+    id="main-collection-content"
+    className="collection-content"
+  >
+    <div className="collection-content-heading">
+      <div>
+        <h3>Your Pokémon Cards</h3>
+        <p>Browse and manage the cards you've collected.</p>
+      </div>
+
+      <span className="collection-content-count">
+        {collection.length} unique cards
+      </span>
+    </div>
+
+    <div className="main-collection-search-bar">
+      <input
+        type="text"
+        value={mainCollectionSearch}
+        onChange={(event) => {
+          setMainCollectionSearch(event.target.value)
+          setVisibleMainCollectionCount(MAIN_COLLECTION_PAGE_SIZE)
+        }}
+        placeholder="Search your collection..."
+        aria-label="Search your collection"
+      />
+
+      {mainCollectionSearch && (
+        <button
+          type="button"
+          onClick={() => {
+            setMainCollectionSearch('')
+            setVisibleMainCollectionCount(MAIN_COLLECTION_PAGE_SIZE)
+          }}
+        >
+          Clear
+        </button>
+      )}
+    </div>
+
+<div className="main-collection-filters">
+  <div className="main-collection-filter">
+    <label htmlFor="main-collection-set-filter">
+      Pokémon Set
+    </label>
+
+    <select
+      id="main-collection-set-filter"
+      value={mainCollectionSetFilter}
+      onChange={(event) => {
+        setMainCollectionSetFilter(event.target.value)
+        setVisibleMainCollectionCount(MAIN_COLLECTION_PAGE_SIZE)
+    }}
+    >
+      <option value="all">All Sets</option>
+
+      {mainCollectionSets.map((setName) => (
+        <option key={setName} value={setName}>
+          {setName}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  <div className="main-collection-filter">
+    <label htmlFor="main-collection-variant-filter">
+      Card Variant
+    </label>
+
+    <select
+      id="main-collection-variant-filter"
+      value={mainCollectionVariantFilter}
+      onChange={(event) => {
+        setMainCollectionVariantFilter(event.target.value)
+        setVisibleMainCollectionCount(MAIN_COLLECTION_PAGE_SIZE)
+      }}
+    >
+      <option value="all">All Variants</option>
+
+      {mainCollectionVariants.map((variant) => (
+        <option key={variant} value={variant}>
+          {variant}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  <div className="main-collection-filter">
+    <label htmlFor="main-collection-sort">
+      Sort By
+    </label>
+
+    <select
+      id="main-collection-sort"
+      value={mainCollectionSort}
+      onChange={(event) => {
+        setMainCollectionSort(event.target.value as 'name' | 'set')
+        setVisibleMainCollectionCount(MAIN_COLLECTION_PAGE_SIZE)
+      }}
+    >
+      <option value="name">Pokémon Name (A–Z)</option>
+      <option value="set">Set Name (A–Z)</option>
+    </select>
+  </div>
+</div>
+
+<div className="main-collection-toolbar">
+  <span>
+    Showing {filteredMainCollection.length} of {collection.length} cards
+  </span>
+
+  <div className="main-collection-view-toggle">
+    <button
+      type="button"
+      className={mainCollectionDisplay === 'grid' ? 'active' : ''}
+      onClick={() => setMainCollectionDisplay('grid')}
+      aria-pressed={mainCollectionDisplay === 'grid'}
+    >
+      ▦ Grid
+    </button>
+
+    <button
+      type="button"
+      className={mainCollectionDisplay === 'list' ? 'active' : ''}
+      onClick={() => setMainCollectionDisplay('list')}
+      aria-pressed={mainCollectionDisplay === 'list'}
+    >
+      ☰ List
+    </button>
+  </div>
+</div>
+
+   <div
+    className={`collection-grid ${
+      mainCollectionDisplay === 'list' ? 'main-list-view' : ''
+    }`}
+  >
+          {visibleMainCollection.map((card) => (
             <CollectionCard
               key={card.id}
               card={card}
+              onManage={setSelectedManageCard}
+              binderPlacements={getBinderPlacements(card)}
+              onBinderClick={handleBinderIndicatorClick}
             />
           ))}
         </div>
+        
+        {hasMoreMainCollectionCards && (
+          <button
+            type="button"
+            className="main-collection-show-more"
+            onClick={() =>
+              setVisibleMainCollectionCount(
+                (count) => count + MAIN_COLLECTION_PAGE_SIZE
+              )
+            }
+          >
+            Show More (
+            {Math.min(
+              MAIN_COLLECTION_PAGE_SIZE,
+              filteredMainCollection.length - visibleMainCollectionCount
+            )} more)
+        </button>
+        )}
+
+        {filteredMainCollection.length === 0 && (
+          <p className="main-collection-empty">
+          No matching cards found. Try another search!
+        </p>
+      )}
       </div>
     )}
   </section>
@@ -601,6 +928,65 @@ return (
         onAdd={handleAddToCollection}
       />
 )}
+
+
+{selectedManageCard && (
+  <CollectionCardActions
+    card={selectedManageCard}
+    onClose={() => setSelectedManageCard(null)}
+    onViewDetails={() => {
+      console.log('View collection card:', selectedManageCard)
+    }}
+    onManageQuantity={handleUpdateCollectionQuantity}
+    onRemove={handleRemoveFromCollection}
+  />
+)}
+
+{selectedBinderLocations && (
+  <div
+    className="binder-locations-overlay"
+    onClick={() => setSelectedBinderLocations(null)}
+  >
+    <div
+      className="binder-locations-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Choose binder location"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="binder-locations-header">
+        <h3>Choose Binder Location</h3>
+
+        <button
+          type="button"
+          onClick={() => setSelectedBinderLocations(null)}
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </div>
+
+      <p>This card appears in multiple binder pockets.</p>
+
+      <div className="binder-locations-list">
+        {selectedBinderLocations.map((location) => (
+          <button
+            type="button"
+            key={`${location.pageNumber}-${location.slotNumber}`}
+            onClick={() => {
+              setSelectedBinderLocations(null)
+              handleJumpToBinderPage(location.pageNumber)
+            }}
+          >
+            📖 Page {location.pageNumber} · Slot {location.slotNumber}
+            <span>→</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
+
 
   </main>
 )

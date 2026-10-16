@@ -2,6 +2,14 @@ import type { OwnedCard } from '../types/PokemonCards'
 
 interface CollectionCardProps {
   card: OwnedCard
+  onManage: (card: OwnedCard) => void
+  binderPlacements: {
+    pageNumber: number
+    slotNumber: number
+  }[]
+  onBinderClick: (
+    placements: { pageNumber: number; slotNumber: number }[]
+  ) => void
 }
 
 function formatVariantName(type: string) {
@@ -20,7 +28,12 @@ function formatVariantName(type: string) {
   return type
 }
 
-function CollectionCard({ card }: CollectionCardProps) {
+function CollectionCard({
+  card,
+  onManage,
+  binderPlacements,
+  onBinderClick,
+}: CollectionCardProps) {
   return (
     <article className="collection-card">
       <div className="collection-card-image">
@@ -53,11 +66,48 @@ function CollectionCard({ card }: CollectionCardProps) {
           #{card.localId}
         </p>
 
-        <span className="collection-variant">
-          {formatVariantName(card.variant.type)}
-        </span>
-      </div>
-    </article>
+<span className="collection-variant">
+  {formatVariantName(card.variant.type)}
+</span>
+
+<p className="collection-card-quantity-text">
+  {card.quantity} {card.quantity === 1 ? 'copy' : 'copies'} owned
+</p>
+
+{binderPlacements.length > 0 && (
+  <button
+    type="button"
+    className="collection-binder-indicator"
+    onClick={() => onBinderClick(binderPlacements)}
+    title="View card in binder"
+  >
+    <span className="collection-binder-indicator-icon">
+      📖
+    </span>
+
+    <span className="collection-binder-indicator-text">
+      {binderPlacements.length === 1
+        ? `In Binder · Page ${binderPlacements[0].pageNumber}`
+        : `In Binder · ${binderPlacements.length} locations`}
+    </span>
+  </button>
+)}
+
+</div>
+
+<button
+  type="button"
+  className="collection-manage-button"
+  onClick={() => onManage(card)}
+  aria-label={`Manage ${card.name} from ${card.set.name}`}
+  title="Manage Card"
+>
+  •••
+</button>
+</article>
+
+
+
   )
 }
 

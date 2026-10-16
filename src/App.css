@@ -1852,3 +1852,699 @@ button.binder-collection-card {
   background: #344738;
   border-color: #a9c8a6;
 }
+
+/* Main collection redesign - Step 28A */
+
+.collection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.collection-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border: 1px solid #78967c;
+  border-radius: 10px;
+  background: #29352b;
+  color: #c4dec1;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.collection-toggle-button:hover {
+  background: #344738;
+  border-color: #a9c8a6;
+}
+
+.collection-content {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid #38383e;
+}
+
+.collection-content-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.collection-content-heading h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.collection-content-heading p {
+  margin: 0;
+  color: #aaa;
+  font-size: 13px;
+}
+
+.collection-content-count {
+  padding: 8px 12px;
+  border: 1px solid #444;
+  border-radius: 999px;
+  background: #29292e;
+  color: #c4dec1;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .collection-header {
+    align-items: flex-start;
+  }
+
+  .collection-toggle-button {
+    width: 100%;
+  }
+
+  .collection-content-heading {
+    align-items: flex-start;
+  }
+}
+
+/* Main Collection Search - Step 28B */
+
+.main-collection-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.main-collection-search-bar input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #555;
+  border-radius: 9px;
+  background: #29292e;
+  color: white;
+  font-size: 14px;
+}
+
+.main-collection-search-bar input:focus {
+  outline: 2px solid #a9c8a6;
+  border-color: transparent;
+}
+
+.main-collection-search-bar button {
+  padding: 12px 16px;
+  border: 1px solid #78967c;
+  border-radius: 9px;
+  background: #29352b;
+  color: #c4dec1;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.main-collection-search-bar button:hover {
+  background: #344738;
+}
+
+.main-collection-results-count {
+  margin: 0 0 16px;
+  color: #aaa;
+  font-size: 12px;
+}
+
+.main-collection-empty {
+  padding: 24px;
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+}
+
+/* Main Collection Grid/List Toggle */
+
+.main-collection-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0 18px;
+}
+
+.main-collection-toolbar > span {
+  color: #aaa;
+  font-size: 12px;
+}
+
+.main-collection-view-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #444;
+  border-radius: 9px;
+  background: #25252a;
+}
+
+.main-collection-view-toggle button {
+  padding: 7px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #b8b8b8;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.main-collection-view-toggle button.active {
+  background: #a9c8a6;
+  color: #18231a;
+  font-weight: 700;
+}
+
+.main-collection-view-toggle button:hover:not(.active) {
+  background: #38383e;
+  color: white;
+}
+
+/* Main Collection List View */
+
+/* Main Collection List View */
+
+.collection-grid.main-list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Each card becomes a horizontal row */
+.collection-grid.main-list-view .collection-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  padding: 12px 16px;
+}
+
+/* Small card artwork */
+.collection-grid.main-list-view .collection-card-image {
+  width: 70px;
+  min-width: 70px;
+  max-width: 70px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* Prevent artwork from stretching */
+.collection-grid.main-list-view .collection-card-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* Information beside artwork */
+.collection-grid.main-list-view .collection-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+/* Pokémon name */
+.collection-grid.main-list-view .collection-card-info h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Set, number, and variant */
+.collection-grid.main-list-view .collection-card-set,
+.collection-grid.main-list-view .collection-card-number,
+.collection-grid.main-list-view .collection-variant {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Quantity badge stays attached to artwork */
+.collection-grid.main-list-view .quantity-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+/* Mobile layout */
+@media (max-width: 480px) {
+  .collection-grid.main-list-view .collection-card {
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .collection-grid.main-list-view .collection-card-image {
+    width: 55px;
+    min-width: 55px;
+    max-width: 55px;
+  }
+
+  .collection-grid.main-list-view .collection-card-info h3 {
+    font-size: 14px;
+  }
+}
+
+/* Main Collection Filters - Step 28B-3 */
+
+.main-collection-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.main-collection-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.main-collection-filter label {
+  color: #b8b8b8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.main-collection-filter select {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #555;
+  border-radius: 8px;
+  background: #2b2b30;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.main-collection-filter select:focus {
+  outline: 2px solid #a9c8a6;
+  border-color: transparent;
+}
+
+@media (max-width: 700px) {
+  .main-collection-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Main Collection Show More */
+
+.main-collection-show-more {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 13px;
+  border: 1px solid #6f9273;
+  border-radius: 9px;
+  background: #29352b;
+  color: #c4dec1;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.main-collection-show-more:hover {
+  background: #344738;
+  border-color: #a9c8a6;
+}
+
+/* Collection Management Button - Step 28C */
+
+.collection-card {
+  position: relative;
+}
+
+.collection-manage-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #555;
+  border-radius: 9px;
+  background: #29292e;
+  color: #c4dec1;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.collection-manage-button:hover {
+  background: #344738;
+  border-color: #a9c8a6;
+}
+
+/* Keep card information clear of the button in List View */
+.collection-grid.main-list-view .collection-card-info {
+  padding-right: 45px;
+}
+
+
+/* Collection Card Management Modal - Step 28C-2 */
+
+.collection-actions-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.collection-actions-modal {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  border: 1px solid #45454c;
+  border-radius: 18px;
+  background: #202025;
+  color: #f5f5f5;
+  box-sizing: border-box;
+}
+
+.collection-actions-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #444;
+  border-radius: 50%;
+  background: #303036;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.collection-actions-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-right: 20px;
+  margin-bottom: 24px;
+}
+
+.collection-actions-card img {
+  width: 90px;
+  height: auto;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+
+.collection-actions-card h3 {
+  margin: 6px 0;
+  font-size: 20px;
+}
+
+.collection-actions-card p {
+  margin: 5px 0;
+  color: #aaa;
+  font-size: 13px;
+}
+
+.collection-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.collection-actions-list button {
+  width: 100%;
+  padding: 13px 16px;
+  border: 1px solid #484850;
+  border-radius: 10px;
+  background: #2c2c32;
+  color: #f5f5f5;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.collection-actions-list button:hover {
+  background: #383840;
+  border-color: #a9c8a6;
+}
+
+.collection-actions-list .collection-actions-remove {
+  color: #ff9999;
+}
+
+.collection-actions-list .collection-actions-remove:hover {
+  background: #452b30;
+  border-color: #d97979;
+}
+
+/* Collection Quantity Management - Step 28D */
+
+.collection-quantity-editor {
+  padding: 16px;
+  border: 1px solid #484850;
+  border-radius: 10px;
+  background: #29292f;
+}
+
+.collection-quantity-editor p {
+  margin: 0 0 14px;
+  color: #ddd;
+  font-size: 13px;
+}
+
+.collection-quantity-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  margin-bottom: 16px;
+}
+
+.collection-quantity-controls button {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  text-align: center;
+  font-size: 22px;
+}
+
+.collection-quantity-controls strong {
+  min-width: 32px;
+  text-align: center;
+  font-size: 24px;
+}
+
+.collection-quantity-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.collection-quantity-actions button {
+  flex: 1;
+  text-align: center;
+}
+
+.collection-quantity-actions button:last-child {
+  background: #a9c8a6;
+  color: #18231a;
+  font-weight: 700;
+}
+
+.collection-quantity-actions button:last-child:hover {
+  background: #bdd9b9;
+}
+
+.collection-quantity-controls button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Step 28D-2 - Collection Quantity Display */
+
+/* Hide the text label in Grid View */
+.collection-card-quantity-text {
+  display: none;
+}
+
+/* Show the quantity beside card details in List View */
+.collection-grid.main-list-view .collection-card-quantity-text {
+  display: block;
+  margin: 4px 0 0;
+  padding: 5px 9px;
+  width: fit-content;
+  border: 1px solid #526b55;
+  border-radius: 6px;
+  background: #29372c;
+  color: #c4dec1;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Hide the artwork quantity badge in List View */
+.collection-grid.main-list-view .quantity-badge {
+  display: none;
+}
+
+/* Step 29B - In Binder Indicator */
+
+.collection-binder-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 8px;
+  padding: 5px 9px;
+  border: 1px solid #55775d;
+  border-radius: 6px;
+  background: #243b2a;
+  color: #c6e5c7;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.collection-binder-indicator-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.collection-binder-indicator-text {
+  overflow-wrap: anywhere;
+}
+
+/* Keep the indicator compact in Grid View */
+.collection-grid:not(.main-list-view)
+  .collection-binder-indicator {
+  font-size: 11px;
+  padding: 4px 7px;
+}
+
+/* Give it a little breathing room in List View */
+.collection-grid.main-list-view
+  .collection-binder-indicator {
+  margin-top: 6px;
+}
+
+/* Step 29C - Clickable Binder Indicators */
+
+button.collection-binder-indicator {
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+button.collection-binder-indicator:hover {
+  background: #34513a;
+  border-color: #a9c8a6;
+}
+
+button.collection-binder-indicator:focus-visible {
+  outline: 2px solid #a9c8a6;
+  outline-offset: 3px;
+}
+
+/* Multiple Binder Locations Modal */
+
+.binder-locations-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.binder-locations-modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 24px;
+  border: 1px solid #45454c;
+  border-radius: 16px;
+  background: #202025;
+  color: #f5f5f5;
+}
+
+.binder-locations-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.binder-locations-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.binder-locations-header button {
+  border: none;
+  background: transparent;
+  color: #ddd;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.binder-locations-modal > p {
+  color: #aaa;
+  font-size: 13px;
+  margin: 12px 0 20px;
+}
+
+.binder-locations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.binder-locations-list button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #526b55;
+  border-radius: 9px;
+  background: #29372c;
+  color: #d8ead5;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.binder-locations-list button:hover {
+  background: #38513d;
+  border-color: #a9c8a6;
+}
