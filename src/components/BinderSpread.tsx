@@ -7,6 +7,7 @@ interface BinderSpreadProps {
   onSlotClick?: (slotId: string) => void
   onDragStart?: (slotId: string) => void
   onDrop?: (slotId: string) => void
+  isPreviewMode?: boolean
 }
 
 function BinderSpread({
@@ -15,6 +16,7 @@ function BinderSpread({
   onSlotClick,
   onDragStart,
   onDrop,
+  isPreviewMode = false,
 
 }: BinderSpreadProps) {
   return (
@@ -26,6 +28,10 @@ function BinderSpread({
           onSlotClick={onSlotClick}
           onDragStart={onDragStart}
           onDrop={onDrop}
+          isPreviewMode={isPreviewMode}
+          
+          
+          
           />
         ) : (
           <div className="binder-inside-cover">
@@ -43,6 +49,7 @@ function BinderSpread({
           onSlotClick={onSlotClick}
           onDragStart={onDragStart}
           onDrop={onDrop}
+          isPreviewMode={isPreviewMode}
             />
         ) : (
           <div className="binder-inside-cover">

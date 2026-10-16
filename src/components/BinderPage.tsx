@@ -5,6 +5,7 @@ interface BinderPageProps {
   onSlotClick?: (slotId: string) => void
   onDragStart?: (slotId: string) => void
   onDrop?: (slotId: string) => void
+  isPreviewMode?: boolean
 }
 
 function BinderPage({
@@ -12,6 +13,7 @@ function BinderPage({
     onSlotClick,
     onDragStart,
     onDrop,
+    isPreviewMode = false,
 }: BinderPageProps) {
 
   return (
@@ -28,20 +30,27 @@ function BinderPage({
             className="binder-pocket"
             type="button"
             key={slot.id}
-            onClick={() => onSlotClick?.(slot.id)}
-            draggable={Boolean(slot.card)}
+            onClick={() => {
+                if (!isPreviewMode) {
+                    onSlotClick?.(slot.id)
+                }
+            }}
+            draggable={Boolean(slot.card) && !isPreviewMode}
             onDragStart={() => {
-                if (slot.card) {
+                if (slot.card && !isPreviewMode) {
                     onDragStart?.(slot.id)
                 }
             }}
             onDragOver={(event) => {
-                event.preventDefault()
+                if (!isPreviewMode) {
+                    event.preventDefault()
+                }
             }}
-
             onDrop={() => {
-                onDrop?.(slot.id)
-            }}
+                if (!isPreviewMode) {
+                    onDrop?.(slot.id)
+                }
+                }}
           >
             {slot.card ? (
               <img
@@ -49,10 +58,14 @@ function BinderPage({
                 alt={slot.card.name}
               />
             ) : (
-              <div className="empty-pocket">
-                <span className="empty-pocket-plus">+</span>
-                <span>Slot {index + 1}</span>
-              </div>
+                <div className="empty-pocket">
+                    {!isPreviewMode && (
+                        <>
+                            <span className="empty-pocket-plus">+</span>
+                            <span>Slot {index + 1}</span>
+                        </>
+                    )}
+                </div>
             )}
           </button>
         ))}

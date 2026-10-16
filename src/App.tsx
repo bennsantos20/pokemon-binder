@@ -28,6 +28,8 @@ function App() {
     const [currentSpread, setCurrentSpread] = useState(0)
     const [draggedSlotId, setDraggedSlotId] =
   useState<string | null>(null)
+  const [isPreviewMode, setIsPreviewMode] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   
 function createBinderPage(pageNumber: number): BinderPageType {
@@ -127,6 +129,18 @@ function handleBinderSlotClick(slotId: string) {
   setSelectedSlotId(slotId)
 }
 
+async function handleToggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen()
+    } else {
+      await document.exitFullscreen()
+    }
+  } catch (error) {
+    console.error('Unable to toggle fullscreen:', error)
+  }
+}
+
 function handleBinderDragStart(slotId: string) {
   setDraggedSlotId(slotId)
 }
@@ -222,6 +236,24 @@ useEffect(() => {
   )
 }, [binderPages])
 
+useEffect(() => {
+  function handleFullscreenChange() {
+    setIsFullscreen(Boolean(document.fullscreenElement))
+  }
+
+  document.addEventListener(
+    'fullscreenchange',
+    handleFullscreenChange
+  )
+
+  return () => {
+    document.removeEventListener(
+      'fullscreenchange',
+      handleFullscreenChange
+    )
+  }
+}, [])
+
 async function handleSearch() {
   const results = await searchCards(searchTerm)
   setCards(results)
@@ -281,7 +313,11 @@ function handleAddToCollection(
 }
 
 return (
-  <main className="app">
+  <main
+    className={`app ${isPreviewMode ? 'app-preview' : ''} ${
+      isFullscreen ? 'app-fullscreen' : ''
+    }`}
+  >
     <header className="app-header">
       <p className="eyebrow">POKÉMON TCG BINDER PLANNER</p>
       <h1>Pokémon Binder</h1>
@@ -359,12 +395,38 @@ return (
           <h2>My Binder</h2>
         </div>
 
+        <div className="binder-view-controls">
+          <button
+            type="button"
+            onClick={async () => {
+              if (isPreviewMode && document.fullscreenElement) {
+                await document.exitFullscreen()
+              }
+
+              setIsPreviewMode((current) => !current)
+              setSelectedSlotId(null)
+            }}
+          >
+            {isPreviewMode ? '✏️ Back to Designer' : '👁️ Preview Binder'}
+        </button>
+
+        {isPreviewMode && (
+          <button
+            type="button"
+            onClick={handleToggleFullscreen}
+          >
+            {isFullscreen ? '⛶ Exit Fullscreen' : '⛶ Enter Fullscreen'}
+          </button>
+          )}
+        </div>
+
          <BinderSpread
           leftPage={leftPage}
           rightPage={rightPage}
           onSlotClick={handleBinderSlotClick}
           onDragStart={handleBinderDragStart}
           onDrop={handleBinderDrop}
+          isPreviewMode={isPreviewMode}
           />
 
           <div className="binder-navigation">
