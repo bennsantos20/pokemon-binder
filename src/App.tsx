@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getCardById, searchCards } from './services/tcgdex'
+import { searchCards, getCardById } from './services/tcgdex'
 import type { 
   BinderCard,
   BinderPage as BinderPageType,
@@ -14,19 +14,32 @@ import CardDetailsModal from './components/CardDetailsModal'
 import CollectionCard from './components/CollectionCard'
 import BinderSpread from './components/BinderSpread'
 import BinderCardPicker from './components/BinderCardPicker'
+import BinderCardActions from './components/BinderCardActions'
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [cards, setCards] = useState<PokemonCard[]>([])
+  const [isCollectionExpanded, setIsCollectionExpanded] = useState(false)
   
   const [selectedCard, setSelectedCard] =
   useState<PokemonCardDetails | null>(null)
   
   const [selectedSlotId, setSelectedSlotId] =
     useState<string | null>(null)
+    const [selectedOccupiedSlotId, setSelectedOccupiedSlotId] =
+  useState<string | null>(null)
+
   
-    const [currentSpread, setCurrentSpread] = useState(0)
-    const [draggedSlotId, setDraggedSlotId] =
+  const [currentSpread, setCurrentSpread] = useState<number>(() => {
+  const savedSpread = localStorage.getItem('pokemon-binder-current-spread')
+  const parsedSpread = Number(savedSpread)
+
+  return savedSpread !== null && Number.isInteger(parsedSpread) && parsedSpread >= 0
+    ? parsedSpread
+    : 0
+  })
+
+  const [draggedSlotId, setDraggedSlotId] =
   useState<string | null>(null)
   const [isPreviewMode, setIsPreviewMode] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -98,6 +111,10 @@ const [binderPages, setBinderPages] =
     ]
   })
 
+  const selectedOccupiedSlot = binderPages
+  .flatMap((page) => page.slots)
+  .find((slot) => slot.id === selectedOccupiedSlotId)
+
   const leftPage =
   currentSpread === 0
     ? undefined
@@ -126,7 +143,51 @@ const rightPage =
 })
 
 function handleBinderSlotClick(slotId: string) {
-  setSelectedSlotId(slotId)
+  const slot = binderPages
+    .flatMap((page) => page.slots)
+    .find((slot) => slot.id === slotId)
+
+  if (!slot) return
+
+  if (slot.card) {
+    setSelectedSlotId(null)
+    setSelectedOccupiedSlotId(slotId)
+  } else {
+    setSelectedOccupiedSlotId(null)
+    setSelectedSlotId(slotId)
+  }
+}
+
+function handleRemoveCardFromBinder() {
+  if (!selectedOccupiedSlotId) return
+
+  setBinderPages((currentPages) =>
+    currentPages.map((page) => ({
+      ...page,
+      slots: page.slots.map((slot) =>
+        slot.id === selectedOccupiedSlotId
+          ? { ...slot, card: null }
+          : slot
+      ),
+    }))
+  )
+
+  setSelectedOccupiedSlotId(null)
+}
+
+async function handleViewBinderCardDetails() {
+  const cardId = selectedOccupiedSlot?.card?.cardId
+
+  if (!cardId) return
+
+  try {
+    const cardDetails = await getCardById(cardId)
+
+    setSelectedCard(cardDetails)
+    setSelectedOccupiedSlotId(null)
+  } catch (error) {
+    console.error('Failed to load binder card details:', error)
+  }
 }
 
 async function handleToggleFullscreen() {
@@ -235,6 +296,13 @@ useEffect(() => {
     JSON.stringify(binderPages)
   )
 }, [binderPages])
+
+useEffect(() => {
+  localStorage.setItem(
+    'pokemon-binder-current-spread',
+    String(currentSpread)
+  )
+}, [currentSpread])
 
 useEffect(() => {
   function handleFullscreenChange() {
@@ -361,31 +429,44 @@ return (
       ))}
     </section>
 
-    {collection.length > 0 && (
+{collection.length > 0 && (
   <section className="collection-section">
     <div className="collection-header">
       <div>
         <p className="eyebrow">YOUR CARDS</p>
         <h2>My Collection</h2>
+
+        <p className="collection-count">
+          {collection.reduce(
+            (total, card) => total + card.quantity,
+            0
+          )}{' '}
+          cards · {collection.length} unique
+        </p>
       </div>
 
-      <p className="collection-count">
-        {collection.reduce(
-          (total, card) => total + card.quantity,
-          0
-        )}{' '}
-        cards • {collection.length} unique
-      </p>
+      <button
+        type="button"
+        onClick={() => setIsCollectionExpanded((current) => !current)}
+        aria-expanded={isCollectionExpanded}
+        aria-controls="main-collection-content"
+      >
+        {isCollectionExpanded ? '▲ Collapse' : '▼ Expand'}
+      </button>
     </div>
 
-    <div className="collection-grid">
-      {collection.map((card) => (
-        <CollectionCard
-          key={card.id}
-          card={card}
-        />
-      ))}
-    </div>
+    {isCollectionExpanded && (
+      <div id="main-collection-content">
+        <div className="collection-grid">
+          {collection.map((card) => (
+            <CollectionCard
+              key={card.id}
+              card={card}
+            />
+          ))}
+        </div>
+      </div>
+    )}
   </section>
 )}
 
@@ -405,6 +486,7 @@ return (
 
               setIsPreviewMode((current) => !current)
               setSelectedSlotId(null)
+              setSelectedOccupiedSlotId(null)
             }}
           >
             {isPreviewMode ? '✏️ Back to Designer' : '👁️ Preview Binder'}
@@ -490,10 +572,27 @@ return (
     {selectedSlotId && (
       <BinderCardPicker
         slotId={selectedSlotId}
+        collection={collection}
         onClose={() => setSelectedSlotId(null)}
         onPlaceCard={handlePlaceCardInBinder}
       />
     )}
+
+    {selectedOccupiedSlot?.card && (
+  <BinderCardActions
+    card={selectedOccupiedSlot.card}
+    onClose={() => setSelectedOccupiedSlotId(null)}
+    onViewDetails={handleViewBinderCardDetails}
+    onReplace={() => {
+      setSelectedSlotId(selectedOccupiedSlotId)
+      setSelectedOccupiedSlotId(null)
+    }}
+    onAddToCollection={() => {
+      console.log('Add to collection:', selectedOccupiedSlot.card)
+    }}
+    onRemove={handleRemoveCardFromBinder}
+  />
+)}
 
     {selectedCard && (
       <CardDetailsModal
