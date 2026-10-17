@@ -93,8 +93,30 @@ const [visibleMainCollectionCount, setVisibleMainCollectionCount] =
     : 0
   })
 
-  const [isPageNavigatorOpen, setIsPageNavigatorOpen] =
+const [mobilePage, setMobilePage] = useState(1)
+
+const [isMobile, setIsMobile] = useState(
+  () => window.matchMedia('(max-width: 800px)').matches
+)
+
+useEffect(() => {
+  const mediaQuery = window.matchMedia('(max-width: 800px)')
+
+  const handleChange = () => {
+    setIsMobile(mediaQuery.matches)
+  }
+
+  mediaQuery.addEventListener('change', handleChange)
+
+  return () => {
+    mediaQuery.removeEventListener('change', handleChange)
+  }
+}, [])
+
+const [isPageNavigatorOpen, setIsPageNavigatorOpen] =
   useState(false)
+
+const [pageNavigatorSearch, setPageNavigatorSearch] = useState('')
 
 const pageNavigatorRef = useRef<HTMLDivElement>(null)
 const activePageOptionRef = useRef<HTMLButtonElement>(null)
@@ -219,6 +241,7 @@ function handleJumpToBinderPage(pageNumber: number) {
   const targetSpread = Math.floor(pageNumber / 2)
 
   setCurrentSpread(targetSpread)
+  setMobilePage(pageNumber)
 
   setSelectedManageCard(null)
   setSelectedSlotId(null)
@@ -235,6 +258,7 @@ function handleJumpToBinderPage(pageNumber: number) {
 }
 
 function handleTogglePageNavigator() {
+  setPageNavigatorSearch('')
   setIsPageNavigatorOpen((current) => !current)
 }
 
@@ -291,13 +315,15 @@ if (placements.length === 1) {
   setSelectedBinderLocations(placements)
 }
 
-  const leftPage =
-  currentSpread === 0
+const leftPage = isMobile
+  ? undefined
+  : currentSpread === 0
     ? undefined
     : binderPages[currentSpread * 2 - 1]
 
-const rightPage =
-  currentSpread === 0
+const rightPage = isMobile
+  ? binderPages[mobilePage - 1]
+  : currentSpread === 0
     ? binderPages[0]
     : binderPages[currentSpread * 2]
 
@@ -946,13 +972,19 @@ return (
           <div className="binder-navigation">
             <button
               type="button"
-              onClick={() =>
-              setCurrentSpread((spread) =>
-                spread === 0
-                  ? Math.ceil(binderPages.length / 2)
-                  : spread - 1
-              )
-            }
+              onClick={() => {
+                if (isMobile) {
+                  setMobilePage((page) =>
+                    page === 1 ? binderPages.length : page - 1
+                )
+                } else {
+                  setCurrentSpread((spread) =>
+                    spread === 0
+                      ? Math.ceil(binderPages.length / 2)
+                      : spread - 1
+                  )
+                }
+              }}
           >
             {currentSpread === 0 ? '↺ Back' : '← Previous'}
           </button>
@@ -972,11 +1004,13 @@ return (
     <BookOpen size={18} strokeWidth={1.8} />
 
     <span className="binder-page-navigator-trigger-text">
-      {currentSpread === 0
-        ? 'Front / Page 1'
-        : currentSpread === Math.ceil(binderPages.length / 2)
-          ? `Page ${binderPages.length} / Back`
-          : `Pages ${currentSpread * 2}–${currentSpread * 2 + 1}`}
+      {isMobile
+        ? `Page ${mobilePage}`
+        : currentSpread === 0
+          ? 'Front / Page 1'
+          : currentSpread === Math.ceil(binderPages.length / 2)
+            ? `Page ${binderPages.length} / Back`
+            : `Pages ${currentSpread * 2}–${currentSpread * 2 + 1}`}
     </span>
 
     <ChevronDown
@@ -992,17 +1026,52 @@ return (
         <span>Choose Binder Pages</span>
       </div>
 
+      {isMobile && (
+        <div className="binder-page-navigator-search">
+          <input
+            type="text"
+            placeholder="Search page number or name..."
+            value={pageNavigatorSearch}
+            onChange={(e) => setPageNavigatorSearch(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Search binder pages"
+          />
+        </div>
+      )}
+
+
+
+
+
+
       <div className="binder-page-navigator-options">
         {Array.from(
-          { length: Math.ceil(binderPages.length / 2) + 1 },
-          (_, spread) => {
+          { length: isMobile ? binderPages.length : Math.ceil(binderPages.length / 2) + 1 },
+          (_, index) => index
+        )
+          .filter((index) => {
+            if (!isMobile || !pageNavigatorSearch.trim()) return true
+
+            const pageNumber = index + 1
+            const page = binderPages[index]
+            const search = pageNavigatorSearch.trim().toLowerCase()
+
+            return (
+              String(pageNumber).includes(search) ||
+              (page?.name ?? '').toLowerCase().includes(search)
+            )
+          })
+          .map((index) => {
+            const spread = isMobile ? Math.floor((index + 1) / 2) : index
+            const selectedPageNumber = index + 1
             const lastSpread = Math.ceil(binderPages.length / 2)
 
             const leftPageNumber = spread * 2
             const rightPageNumber = spread * 2 + 1
 
-            const pageNumbers =
-              spread === 0
+            const pageNumbers = isMobile
+              ? [selectedPageNumber]
+              : spread === 0
                 ? [1]
                 : spread === lastSpread
                   ? [binderPages.length]
@@ -1017,8 +1086,9 @@ return (
               )
               .filter((name): name is string => Boolean(name))
 
-            const label =
-              spread === 0
+            const label = isMobile
+              ? `Page ${selectedPageNumber}`
+              : spread === 0
                 ? 'Front / Page 1'
                 : spread === lastSpread
                   ? `Page ${binderPages.length} / Back`
@@ -1026,14 +1096,30 @@ return (
 
             return (
               <button
-                key={spread}
+                key={isMobile ? selectedPageNumber : spread}
                 type="button"
-                ref={currentSpread === spread ? activePageOptionRef : null}
+                ref={
+                  (isMobile
+                    ? mobilePage === selectedPageNumber
+                    : currentSpread === spread)
+                    ? activePageOptionRef
+                    : null
+                }
                 className={`binder-page-navigator-option ${
-                  currentSpread === spread ? 'active' : ''
+                  (isMobile
+                    ? mobilePage === selectedPageNumber
+                    : currentSpread === spread)
+                    ? 'active'
+                    : ''
                 }`}
                 onClick={() => {
-                  setCurrentSpread(spread)
+                  if (isMobile) {
+                    setMobilePage(selectedPageNumber)
+                    } else {
+                    setCurrentSpread(spread)
+                  }
+
+                  setPageNavigatorSearch('')
                   setIsPageNavigatorOpen(false)
                 }}
               >
@@ -1051,7 +1137,9 @@ return (
            </span>
 
 
-                {currentSpread === spread && (
+                {(isMobile
+                  ? mobilePage === selectedPageNumber
+                  : currentSpread === spread) && (
                   <Check size={17} strokeWidth={2} />
                 )}
               </button>
@@ -1066,13 +1154,19 @@ return (
 
             <button
               type="button"
-              onClick={() =>
-              setCurrentSpread((spread) =>
-              spread === Math.ceil(binderPages.length / 2)
-                ? 0
-                : spread + 1
-              )
-            }
+              onClick={() => {
+  if (isMobile) {
+    setMobilePage((page) =>
+      page === binderPages.length ? 1 : page + 1
+    )
+  } else {
+    setCurrentSpread((spread) =>
+      spread === Math.ceil(binderPages.length / 2)
+        ? 0
+        : spread + 1
+    )
+  }
+}}
             >
               {currentSpread === Math.ceil(binderPages.length / 2)
                 ? 'Front ↻'

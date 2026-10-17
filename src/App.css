@@ -4557,3 +4557,50 @@ background-size: 16px;
 .binder-section + .search-section {
   margin-top: 62px;
 }
+
+/* Mobile binder page search */
+.binder-page-navigator-search {
+  padding: 10px 12px;
+}
+
+.binder-page-navigator-search input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.binder-page-navigator-search input:focus {
+  border-color: #91b492;
+}
+
+.binder-page-navigator-search input::placeholder {
+  color: #a0a0a0;
+}
+
+/* Mobile binder page labels */
+/* Center binder page labels on mobile only */
+/* Center and slightly raise binder page labels on mobile */
+@media (max-width: 800px) {
+  .binder-page-footer {
+    justify-content: center;
+    transform: translateY(10px);
+  }
+}
+
+/* Align page number and custom name on mobile */
+@media (max-width: 800px) {
+  .binder-page-footer .binder-page-number,
+  .binder-page-footer .binder-page-custom-name {
+    margin: 0;
+    line-height: 1.2;
+    vertical-align: middle;
+  }
+}
