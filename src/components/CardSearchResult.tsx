@@ -31,21 +31,15 @@ function CardSearchResult({
           <p>Card #{card.localId}</p>
         </div>
 
-        <button
-            className="add-button"
-            type="button"
-            aria-label={`Add ${card.name}`}
-        >
-            +
-        </button>
-        <button
-            className="add-button"
-            type="button"
-            aria-label={`Add ${card.name}`}
-            onClick={() => onAdd(card)}
-        >
+       <button
+        className="add-button"
+        type="button"
+        aria-label={`View ${card.name} details`}
+        title="View details / Add to Collection"
+        onClick={() => onAdd(card)}
+      >
         +
-        </button>
+      </button>
 
 
       </div>

@@ -1,11 +1,12 @@
 import type { BinderPage as BinderPageType } from '../types/PokemonCards'
-
 interface BinderPageProps {
   page: BinderPageType
   onSlotClick?: (slotId: string) => void
   onDragStart?: (slotId: string) => void
   onDrop?: (slotId: string) => void
   isPreviewMode?: boolean
+  highlightedSlotId: string | null
+  onRenamePage?: (pageNumber: number) => void
 }
 
 function BinderPage({
@@ -14,6 +15,8 @@ function BinderPage({
     onDragStart,
     onDrop,
     isPreviewMode = false,
+    highlightedSlotId,
+    onRenamePage,
 }: BinderPageProps) {
 
   return (
@@ -27,7 +30,11 @@ function BinderPage({
       >
         {page.slots.map((slot, index) => (
           <button
-            className="binder-pocket"
+            className={`binder-pocket ${
+              !isPreviewMode && highlightedSlotId === slot.id
+                ? 'binder-pocket-highlighted'
+                : ''
+            }`}
             type="button"
             key={slot.id}
             onClick={() => {
@@ -71,9 +78,45 @@ function BinderPage({
         ))}
       </div>
 
-      <p className="binder-page-number">
+      
+
+<div className="binder-page-footer">
+  {!isPreviewMode && onRenamePage ? (
+    <button
+      type="button"
+      className="binder-page-label-button"
+      onClick={() => onRenamePage(page.pageNumber)}
+      aria-label={`Rename Page ${page.pageNumber}${
+        page.name ? `, ${page.name}` : ''
+      }`}
+      title="Click to rename page"
+    >
+      <span className="binder-page-number">
         Page {page.pageNumber}
-      </p>
+      </span>
+
+      {page.name && (
+        <span className="binder-page-custom-name">
+          {page.name}
+        </span>
+      )}
+    </button>
+  ) : (
+    <div className="binder-page-label">
+      <span className="binder-page-number">
+        Page {page.pageNumber}
+      </span>
+
+      {page.name && (
+        <span className="binder-page-custom-name">
+          {page.name}
+        </span>
+      )}
+    </div>
+  )}
+</div>
+
+
     </section>
   )
 }

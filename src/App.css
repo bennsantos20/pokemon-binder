@@ -2040,7 +2040,7 @@ button.binder-collection-card {
 .collection-grid.main-list-view {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 /* Each card becomes a horizontal row */
@@ -2048,18 +2048,19 @@ button.binder-collection-card {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
   width: 100%;
   max-width: none;
   box-sizing: border-box;
-  padding: 12px 16px;
+  padding: 10px 14px;
+  min-height: 88px;
 }
 
 /* Small card artwork */
 .collection-grid.main-list-view .collection-card-image {
-  width: 70px;
-  min-width: 70px;
-  max-width: 70px;
+  width: 174px;
+  min-width: 160px;
+  height: 196px;
   flex-shrink: 0;
   position: relative;
 }
@@ -2078,7 +2079,7 @@ button.binder-collection-card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 5px;
+  gap: 3px;
   flex: 1;
   min-width: 0;
   text-align: left;
@@ -2087,7 +2088,8 @@ button.binder-collection-card {
 /* Pokémon name */
 .collection-grid.main-list-view .collection-card-info h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  line-height: 1.2;
 }
 
 /* Set, number, and variant */
@@ -2547,4 +2549,1086 @@ button.collection-binder-indicator:focus-visible {
 .binder-locations-list button:hover {
   background: #38513d;
   border-color: #a9c8a6;
+}
+
+/* Step 30A - Main Search Improvements */
+
+.search-clear-button {
+  padding: 10px 16px;
+  border: 1px solid #526b55;
+  border-radius: 9px;
+  background: #29372c;
+  color: #d8ead5;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.search-clear-button:hover {
+  background: #38513d;
+  border-color: #a9c8a6;
+}
+
+.search-bar button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Step 30B - Main Search Grid/List Toggle */
+
+.main-search-results-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: 14px auto 20px;
+  width: 100%;
+  max-width: 1100px;
+}
+
+.main-search-results-toolbar .results-count {
+  margin: 0;
+}
+
+.main-search-view-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #45454c;
+  border-radius: 9px;
+  background: #25252b;
+}
+
+.main-search-view-toggle button {
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  background: transparent;
+  color: #aaa;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.main-search-view-toggle button.active {
+  background: #a9c8a6;
+  color: #18231a;
+  font-weight: 700;
+}
+
+.main-search-view-toggle button:hover:not(.active) {
+  background: #36363d;
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .main-search-results-toolbar {
+    flex-wrap: wrap;
+  }
+}
+
+
+/* ==========================================
+   Step 30B-2 - Main Search List View
+   ========================================== */
+
+/* Change the results grid into a vertical list */
+.card-grid.main-search-list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Make each search result a horizontal row */
+.card-grid.main-search-list-view .card-result {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  min-height: 105px;
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+/* Keep card artwork small */
+.card-grid.main-search-list-view .card-image-container {
+  width: 65px;
+  min-width: 65px;
+  height: 90px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* Prevent images from stretching */
+.card-grid.main-search-list-view .card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Position card details horizontally */
+.card-grid.main-search-list-view .card-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Let the name and card number stay together */
+.card-grid.main-search-list-view .card-info > div {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Prevent the plus buttons from stretching */
+.card-grid.main-search-list-view .add-button {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+}
+
+/* Keep image placeholders the same size */
+.card-grid.main-search-list-view .image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 10px;
+}
+
+/* Smaller screens */
+@media (max-width: 600px) {
+  .card-grid.main-search-list-view .card-result {
+    gap: 10px;
+    padding: 10px;
+    min-height: 90px;
+  }
+
+  .card-grid.main-search-list-view .card-image-container {
+    width: 50px;
+    min-width: 50px;
+    height: 70px;
+  }
+
+  .card-grid.main-search-list-view .card-info {
+    gap: 8px;
+  }
+
+  .card-grid.main-search-list-view .add-button {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Step 30E - Compact Collection List View */
+
+.collection-grid.main-list-view .collection-binder-indicator {
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 3px;
+  padding: 5px 8px;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.collection-grid.main-list-view .collection-card-info {
+  padding: 0;
+}
+
+@media (max-width: 480px) {
+  .collection-grid.main-list-view .collection-card {
+    gap: 10px;
+    padding: 10px;
+  }
+
+.collection-grid.main-list-view .collection-card-image {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  height: 112px;
+}
+
+  .collection-grid.main-list-view .collection-card-info h3 {
+    font-size: 14px;
+  }
+}
+
+
+/* ==========================================
+   Step 30F - Highlight Selected Binder Pocket
+   ========================================== */
+
+
+/* Step 30F - Highlight Selected Binder Pocket */
+
+
+/* Step 30F - Three-Second Flashing Pocket Highlight */
+
+
+/* Step 30F - Five-Second Purple Pocket Highlight */
+
+.binder-pocket.binder-pocket-highlighted {
+  position: relative;
+  z-index: 2;
+
+  animation: binder-pocket-flash 1.000s ease-in-out 5;
+}
+
+@keyframes binder-pocket-flash {
+  0%, 100% {
+    outline: 4px solid transparent;
+    outline-offset: -4px;
+    box-shadow: none;
+  }
+
+  50% {
+    outline: 5px solid #a855f7;
+    outline-offset: -5px;
+
+    box-shadow:
+      0 0 0 4px rgba(168, 85, 247, 0.75),
+      0 0 30px rgba(168, 85, 247, 0.85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .binder-pocket.binder-pocket-highlighted {
+    animation: none;
+    outline: 4px solid #a855f7;
+    outline-offset: -4px;
+  }
+}
+
+
+/* Step 30G - Binder Action Menu Icons */
+
+.binder-actions-list button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.binder-actions-list button svg {
+  flex-shrink: 0;
+  color: #c4a0f7;
+  transition: color 0.2s ease;
+}
+
+.binder-actions-list button:hover svg {
+  color: #e2ccff;
+}
+
+.binder-actions-list .binder-actions-remove svg {
+  color: #e3a5ae;
+}
+
+.binder-actions-list .binder-actions-remove:hover svg {
+  color: #ffb4c0;
+}
+
+
+/* Step 30G - Collection Manager Icons */
+
+.collection-actions-list > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.collection-actions-list > button svg {
+  flex-shrink: 0;
+  color: #c4a0f7;
+}
+
+.collection-actions-list > button:hover svg {
+  color: #e2ccff;
+}
+
+.collection-actions-list .collection-actions-remove svg {
+  color: #e3a5ae;
+}
+
+.collection-actions-list .collection-actions-remove:hover svg {
+  color: #ffb4c0;
+}
+
+/* Quantity editor buttons */
+
+.collection-quantity-controls button,
+.collection-quantity-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.collection-quantity-controls button svg,
+.collection-quantity-actions button svg {
+  flex-shrink: 0;
+}
+
+
+/* Step 30G - Binder Picker Back Buttons */
+
+.binder-picker-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  padding: 9px 15px;
+  width: fit-content;
+
+  background: #303039;
+  color: #f0edf5;
+
+  border: 1px solid #53505e;
+  border-radius: 9px;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.binder-picker-back svg {
+  color: #c4a0f7;
+  flex-shrink: 0;
+}
+
+.binder-picker-back:hover {
+  background: #3c3449;
+  border-color: #a855f7;
+  transform: translateX(-2px);
+}
+
+.binder-picker-back:focus-visible {
+  outline: 2px solid #c4a0f7;
+  outline-offset: 3px;
+}
+
+/* Step 30G - Binder Picker Option Icons */
+
+.binder-picker-option-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #c4a0f7;
+}
+
+.binder-picker-option-icon svg {
+  flex-shrink: 0;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.binder-picker-option:hover .binder-picker-option-icon svg {
+  color: #e2ccff;
+  transform: scale(1.08);
+}
+
+
+/* Step 31 - Custom Binder Page Names */
+
+.binder-page-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 24px;
+  transform: translateY(20px);
+}
+
+.binder-page-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.binder-page-custom-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #526b56;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+.binder-page-rename {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 7px;
+  background: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.binder-page-rename:hover {
+  background: rgba(124, 58, 237, 0.18);
+  transform: scale(1.08);
+}
+
+.binder-page-rename:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+
+/* Step 31C - Custom Binder Page Navigator */
+
+.binder-page-navigator {
+  position: relative;
+  min-width: 190px;
+}
+
+.binder-page-navigator-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  background: #29332d;
+  color: #f2f4f2;
+  border: 1px solid #53675a;
+  border-radius: 11px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.binder-page-navigator-trigger:hover {
+  background: #344139;
+  border-color: #b99ae9;
+}
+
+.binder-page-navigator-trigger > svg:first-child {
+  color: #c4a0f7;
+  flex-shrink: 0;
+}
+
+.binder-page-navigator-trigger-text {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.binder-page-navigator-trigger > svg:last-child {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.navigator-chevron-open {
+  transform: rotate(180deg);
+}
+
+.binder-page-navigator-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 390px;
+  max-width: calc(100vw - 32px);
+  padding: 9px;
+  background: #22252a;
+  border: 1px solid #585263;
+  border-radius: 15px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  animation: binder-navigator-appear 0.18s ease-out;
+}
+
+.binder-page-navigator-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 12px;
+  color: #c4a0f7;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.binder-page-navigator-options {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.binder-page-navigator-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 13px;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #f1edf5;
+  cursor: pointer;
+  font: inherit;
+}
+
+.binder-page-navigator-option:hover {
+  background: #35313e;
+}
+
+.binder-page-navigator-option.active {
+  background: #40344e;
+  border-color: #8d69b8;
+}
+
+.binder-page-navigator-option > svg {
+  color: #c4a0f7;
+  flex-shrink: 0;
+}
+
+
+.binder-page-navigator-option-text {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+
+
+.binder-page-navigator-option-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c4d0c7;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+
+
+.binder-page-navigator-option-subtitle {
+  color: #e0c2ff;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+@keyframes binder-navigator-appear {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-width: 480px) {
+  .binder-page-navigator {
+    min-width: 155px;
+  }
+
+  .binder-page-navigator-menu {
+    width: 270px;
+  }
+}
+
+
+/* Step 31D - Custom Rename Page Modal */
+
+.rename-page-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(5px);
+}
+
+.rename-page-modal {
+  width: 100%;
+  max-width: 430px;
+  padding: 25px;
+  border: 1px solid #4f4b59;
+  border-radius: 18px;
+  background: #222329;
+  color: #f4f1f6;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  animation: rename-page-appear 0.2s ease-out;
+}
+
+.rename-page-header,
+.rename-page-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.rename-page-header {
+  justify-content: space-between;
+}
+
+.rename-page-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 43px;
+  height: 43px;
+  border-radius: 12px;
+  background: #40344e;
+  color: #c4a0f7;
+}
+
+.rename-page-eyebrow {
+  margin: 0 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  color: #c4a0f7;
+}
+
+.rename-page-heading h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.rename-page-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #494750;
+  border-radius: 50%;
+  background: #303039;
+  color: #f0edf5;
+  cursor: pointer;
+}
+
+.rename-page-close:hover {
+  background: #43394c;
+}
+
+.rename-page-description {
+  margin: 20px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #bdb7c5;
+}
+
+.rename-page-label {
+  display: block;
+  margin-bottom: 9px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rename-page-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 14px;
+  border: 1px solid #615a6c;
+  border-radius: 10px;
+  background: #2d2d35;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.rename-page-input:focus {
+  border-color: #b58ce9;
+  box-shadow: 0 0 0 3px rgba(181, 140, 233, 0.15);
+}
+
+.rename-page-hint {
+  margin: 8px 0 22px;
+  color: #a9a2b1;
+  font-size: 11px;
+}
+
+.rename-page-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.rename-page-actions button {
+  flex: 1;
+  min-height: 42px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rename-page-cancel {
+  border: 1px solid #53505e;
+  background: #303039;
+  color: #f0edf5;
+}
+
+.rename-page-cancel:hover {
+  background: #3c3449;
+}
+
+.rename-page-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #a9cfae;
+  background: #a9cfae;
+  color: #1f3023;
+}
+
+.rename-page-save:hover {
+  background: #bee0c2;
+}
+
+@keyframes rename-page-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 480px) {
+  .rename-page-modal {
+    padding: 20px;
+  }
+
+  .rename-page-heading h3 {
+    font-size: 18px;
+  }
+}
+
+
+/* Step 31E - Clickable Binder Page Labels */
+
+.binder-page-label-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.binder-page-label-button:hover {
+  background: rgba(80, 105, 85, 0.12);
+}
+
+.binder-page-label-button:hover .binder-page-number,
+.binder-page-label-button:hover .binder-page-custom-name {
+  color: #68479b;
+}
+
+.binder-page-label-button:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 3px;
+}
+
+.binder-page-label-button .binder-page-number {
+  margin: 0;
+}
+
+.binder-page-label-button .binder-page-custom-name {
+  transition: color 0.2s ease;
+}
+
+
+/* Step 32A - Binder View Controls */
+
+.binder-view-button,
+.binder-fullscreen-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.binder-view-button-preview {
+  background: #40344e;
+  border: 1px solid #8d69b8;
+  color: #e4d0ff;
+}
+
+.binder-view-button-preview svg {
+  color: #c4a0f7;
+  stroke: #c4a0f7;
+}
+
+.binder-view-button-preview:hover {
+  background: #514063;
+  transform: translateY(-1px);
+}
+
+.binder-view-button-back {
+  background: #29382f;
+  border: 1px solid #66816b;
+  color: #c8e3ce;
+}
+
+.binder-view-button-back:hover {
+  background: #354b3b;
+  transform: translateY(-1px);
+}
+
+.binder-fullscreen-button {
+  background: #2b2d35;
+  border: 1px solid #565160;
+  color: #e2d8ed;
+}
+
+.binder-fullscreen-button:hover {
+  background: #3c3546;
+  border-color: #9a79c6;
+}
+
+.binder-view-button:focus-visible,
+.binder-fullscreen-button:focus-visible {
+  outline: 2px solid #c4a0f7;
+  outline-offset: 3px;
+}
+
+
+/* Step 32C - Remove from Collection Confirmation */
+
+.remove-collection-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(5px);
+}
+
+.remove-collection-modal {
+  width: 100%;
+  max-width: 440px;
+  box-sizing: border-box;
+  padding: 24px;
+  border: 1px solid #5b4850;
+  border-radius: 18px;
+  background: #222329;
+  color: #f4f1f6;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  animation: rename-page-appear 0.2s ease-out;
+}
+
+.remove-collection-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.remove-collection-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 43px;
+  height: 43px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #493036;
+  color: #f0a1ad;
+}
+
+.remove-collection-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.remove-collection-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #c4a0f7;
+}
+
+.remove-collection-heading h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.remove-collection-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid #494750;
+  border-radius: 50%;
+  background: #303039;
+  color: #f0edf5;
+  cursor: pointer;
+}
+
+.remove-collection-description {
+  margin: 20px 0;
+  color: #c6c0ca;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.remove-collection-description strong {
+  color: #ffffff;
+}
+
+.remove-collection-card-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid #45434e;
+  border-radius: 12px;
+  background: #2b2b33;
+}
+
+.remove-collection-card-info img {
+  width: 66px;
+  height: 92px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.remove-collection-card-info > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.remove-collection-card-info strong {
+  font-size: 14px;
+}
+
+.remove-collection-card-info span {
+  color: #bdb7c5;
+  font-size: 12px;
+}
+
+.remove-collection-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0 22px;
+  padding: 12px;
+  border: 1px solid #534b60;
+  border-radius: 10px;
+  background: #302c39;
+  color: #d6cadd;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.remove-collection-notice svg {
+  color: #c4a0f7;
+  flex-shrink: 0;
+}
+
+.remove-collection-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.remove-collection-actions button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.remove-collection-cancel {
+  border: 1px solid #53505e;
+  background: #303039;
+  color: #f0edf5;
+}
+
+.remove-collection-cancel:hover {
+  background: #3c3449;
+}
+
+.remove-collection-confirm {
+  border: 1px solid #aa5361;
+  background: #8f3d4b;
+  color: #ffffff;
+}
+
+.remove-collection-confirm:hover {
+  background: #a74959;
+}
+
+@media (max-width: 480px) {
+  .remove-collection-modal {
+    padding: 18px;
+  }
+
+  .remove-collection-heading h3 {
+    font-size: 16px;
+  }
 }

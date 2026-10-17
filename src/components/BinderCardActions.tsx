@@ -1,5 +1,6 @@
 
 import type { BinderCard } from '../types/PokemonCards'
+import { Eye, RefreshCw, LibraryBig, Trash2 } from 'lucide-react'
 
 interface BinderCardActionsProps {
   card: BinderCard
@@ -51,27 +52,35 @@ function BinderCardActions({
           </div>
         </div>
 
-        <div className="binder-actions-list">
-          <button type="button" onClick={onViewDetails}>
-            👁️ View Card Details
-          </button>
+        
+    <div className="binder-actions-list">
+      <button type="button" onClick={onViewDetails}>
+        <Eye size={18} strokeWidth={1.8} />
+        <span>View Card Details</span>
+      </button>
 
-          <button type="button" onClick={onReplace}>
-            🔄 Replace Card
-          </button>
+      <button type="button" onClick={onReplace}>
+        <RefreshCw size={18} strokeWidth={1.8} />
+        <span>Replace Card</span>
+      </button>
 
-          <button type="button" onClick={onAddToCollection}>
-            📦 Add to My Collection
-          </button>
+      <button type="button" onClick={onAddToCollection}>
+        <LibraryBig size={18} strokeWidth={1.8} />
+        <span>Add to My Collection</span>
+      </button>
 
-          <button
-            type="button"
-            className="binder-actions-remove"
-            onClick={onRemove}
-          >
-            🗑️ Remove from Binder
-          </button>
-        </div>
+      <button
+        type="button"
+        className="binder-actions-remove"
+        onClick={onRemove}
+      >
+        <Trash2 size={18} strokeWidth={1.8} />
+        <span>Remove from Binder</span>
+      </button>
+    </div>
+
+
+
       </div>
     </div>
   )

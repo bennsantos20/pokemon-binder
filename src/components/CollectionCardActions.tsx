@@ -1,5 +1,14 @@
 import { useState } from 'react'
 import type { OwnedCard } from '../types/PokemonCards'
+import {
+  Eye,
+  SlidersHorizontal,
+  Trash2,
+  Minus,
+  Plus,
+  X,
+  Check,
+} from 'lucide-react'
 
 
 interface CollectionCardActionsProps {
@@ -60,7 +69,8 @@ function CollectionCardActions({
 
         <div className="collection-actions-list">
           <button type="button" onClick={onViewDetails}>
-            👁️ View Card Details
+            <Eye size={18} strokeWidth={1.8} />
+            <span>View Card Details</span>
           </button>
 
           {isEditingQuantity ? (
@@ -73,7 +83,7 @@ function CollectionCardActions({
         disabled={quantity <= 1}
         onClick={() => setQuantity((current) => Math.max(1, current - 1))}
       >
-        −
+        <Minus size={16} strokeWidth={2} />
       </button>
 
       <strong>{quantity}</strong>
@@ -82,7 +92,7 @@ function CollectionCardActions({
         type="button"
         onClick={() => setQuantity((current) => current + 1)}
       >
-        +
+        <Plus size={16} strokeWidth={2} />
       </button>
     </div>
 
@@ -94,7 +104,8 @@ function CollectionCardActions({
           setIsEditingQuantity(false)
         }}
       >
-        Cancel
+        <X size={16} strokeWidth={1.8} />
+          <span>Cancel</span>
       </button>
 
       <button
@@ -104,25 +115,28 @@ function CollectionCardActions({
           setIsEditingQuantity(false)
         }}
       >
-        Save Quantity
+        <Check size={16} strokeWidth={1.8} />
+          <span>Save Quantity</span>
       </button>
     </div>
   </div>
 ) : (
-  <button
-    type="button"
-    onClick={() => setIsEditingQuantity(true)}
-  >
-    ➕➖ Manage Quantity
-  </button>
-)}
+    <button
+      type="button"
+      onClick={() => setIsEditingQuantity(true)}
+      >
+        <SlidersHorizontal size={18} strokeWidth={1.8} />
+        <span>Manage Quantity</span>
+      </button>
+      )}
 
           <button
             type="button"
             className="collection-actions-remove"
             onClick={onRemove}
           >
-            🗑️ Remove from Collection
+            <Trash2 size={18} strokeWidth={1.8} />
+            <span>Remove from Collection</span>
           </button>
         </div>
       </div>

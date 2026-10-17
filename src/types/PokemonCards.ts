@@ -59,6 +59,7 @@ export interface BinderSlot {
 export interface BinderPage {
   id: string
   pageNumber: number
+  name?: string
   rows: number
   columns: number
   slots: BinderSlot[]

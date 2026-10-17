@@ -9,7 +9,7 @@ import type {
     PokemonCard,
     PokemonCardDetails,
 } from '../types/PokemonCards'
-
+import { ArrowLeft, Search, LibraryBig } from 'lucide-react'
 interface BinderCardPickerProps {
   slotId: string
   collection: OwnedCard[]
@@ -169,8 +169,10 @@ function handlePlaceCollectionCard() {
           </button>
         </div>
 
-        <p className="binder-picker-slot">
-          Selected pocket: {slotId}
+        <p className="binder-picker-selected-pocket">
+          Selected pocket:{' '}
+          {slotId
+            .replace(/^page-(\d+)-slot-(\d+)$/, 'Page $1 · Pocket $2')}
         </p>
     {view === 'options' ? (
         <div className="binder-picker-options">
@@ -180,7 +182,7 @@ function handlePlaceCollectionCard() {
             onClick={() => setView('search')}
           >
             <span className="binder-picker-option-icon">
-              🔍
+              <Search size={25} strokeWidth={1.8} />
             </span>
 
             <strong>Search All Cards</strong>
@@ -196,7 +198,7 @@ function handlePlaceCollectionCard() {
             onClick={() => setView('collection')}
           >
             <span className="binder-picker-option-icon">
-              🃏
+              <LibraryBig size={25} strokeWidth={1.8} />
             </span>
 
             <strong>My Collection</strong>
@@ -211,12 +213,14 @@ function handlePlaceCollectionCard() {
     <div className="binder-placement-preview">
       <button
         type="button"
+        className="binder-picker-back"
         onClick={() => {
           setSelectedCard(null)
           setSelectedVariant(null)
         }}
       >
-        ← Back to results
+        <ArrowLeft size={17} strokeWidth={2} />
+        <span>Back to Results</span>
       </button>
 
       <div className="binder-placement-card">
@@ -276,11 +280,13 @@ function handlePlaceCollectionCard() {
     </div>
 ) : (
   <div style={{ display: view === 'collection' ? 'none' : undefined }}>
-    <button
+   <button
       type="button"
+      className="binder-picker-back"
       onClick={() => setView('options')}
     >
-      ← Back
+      <ArrowLeft size={17} strokeWidth={2} />
+      <span>Back</span>
     </button>
 
         <h3>Search All Cards</h3>
@@ -348,12 +354,14 @@ function handlePlaceCollectionCard() {
 
   {view === 'collection' && (
   <div className="binder-collection-picker">
-    <button
-      type="button"
-      onClick={() => setView('options')}
-    >
-      ← Back
-    </button>
+   <button
+    type="button"
+    className="binder-picker-back"
+    onClick={() => setView('options')}
+  >
+    <ArrowLeft size={17} strokeWidth={2} />
+    <span>Back</span>
+  </button>
 
   <h3>My Collection</h3>
 

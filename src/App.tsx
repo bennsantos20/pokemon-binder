@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect,useRef, useState } from 'react'
 import { searchCards, getCardById } from './services/tcgdex'
 import type { 
   BinderCard,
@@ -16,19 +16,47 @@ import BinderSpread from './components/BinderSpread'
 import BinderCardPicker from './components/BinderCardPicker'
 import BinderCardActions from './components/BinderCardActions'
 import CollectionCardActions from './components/CollectionCardActions'
+import { BookOpen, ChevronDown, Check, Pencil, X, Eye, ArrowLeft, Maximize2, Trash2, Info} from 'lucide-react'
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [cards, setCards] = useState<PokemonCard[]>([])
-  const [isCollectionExpanded, setIsCollectionExpanded] = useState(false)
+  const [mainSearchView, setMainSearchView] =
+    useState<'grid' | 'list'>('grid')
+  
+  const [isCollectionExpanded, setIsCollectionExpanded] =
+    useState<boolean>(() => {
+      const savedPreference = localStorage.getItem(
+        'pokemon-binder-collection-expanded'
+      )
+
+      return savedPreference === 'true'
+    })
+
   const [mainCollectionSearch, setMainCollectionSearch] = useState('')
   const [mainCollectionDisplay, setMainCollectionDisplay] =
     useState<'grid' | 'list'>('grid')
   const [selectedManageCard, setSelectedManageCard] =
     useState<OwnedCard | null>(null)
+  const [isRemoveCollectionConfirmOpen, setIsRemoveCollectionConfirmOpen] =
+  useState(false)
 
   const [selectedBinderLocations, setSelectedBinderLocations] =
   useState<{ pageNumber: number; slotNumber: number }[] | null>(null)
+
+  const [highlightedBinderSlotId, setHighlightedBinderSlotId] =
+  useState<string | null>(null)
+
+useEffect(() => {
+  if (!highlightedBinderSlotId) return
+
+  const timeout = window.setTimeout(() => {
+    setHighlightedBinderSlotId(null)
+  }, 5000)
+
+  return () => window.clearTimeout(timeout)
+}, [highlightedBinderSlotId])
+
   
   const [mainCollectionSetFilter, setMainCollectionSetFilter] =
   useState('all')
@@ -61,6 +89,17 @@ const [visibleMainCollectionCount, setVisibleMainCollectionCount] =
     ? parsedSpread
     : 0
   })
+
+  const [isPageNavigatorOpen, setIsPageNavigatorOpen] =
+  useState(false)
+
+const pageNavigatorRef = useRef<HTMLDivElement>(null)
+const activePageOptionRef = useRef<HTMLButtonElement>(null)
+const [renamingPageNumber, setRenamingPageNumber] =
+  useState<number | null>(null)
+
+const [renamePageValue, setRenamePageValue] =
+  useState('')
 
   const [draggedSlotId, setDraggedSlotId] =
   useState<string | null>(null)
@@ -114,24 +153,20 @@ const [binderPages, setBinderPages] =
           savedBinderPage
         ) as BinderPageType
 
-        return [page]
+        return [
+          page,
+          ...Array.from({ length: 39 }, (_, index) =>
+            createBinderPage(index + 2)
+          ),
+        ]
       } catch {
         // Fall back to a fresh binder
       }
     }
 
-    return [
-      {
-        id: 'page-1',
-        pageNumber: 1,
-        rows: 3,
-        columns: 3,
-        slots: Array.from({ length: 9 }, (_, index) => ({
-          id: `page-1-slot-${index + 1}`,
-          card: null,
-        })),
-      },
-    ]
+      return Array.from({ length: 40 }, (_, index) =>
+        createBinderPage(index + 1)
+      )
   })
 
   const selectedOccupiedSlot = binderPages
@@ -159,6 +194,24 @@ const [binderPages, setBinderPages] =
   )
 }
 
+
+function highlightBinderLocation(
+  location: { pageNumber: number; slotNumber: number }
+) {
+  const slotId =
+    `page-${location.pageNumber}-slot-${location.slotNumber}`
+
+  // Remove the previous highlight so it can restart.
+  setHighlightedBinderSlotId(null)
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      setHighlightedBinderSlotId(slotId)
+    })
+  })
+}
+
+
 function handleJumpToBinderPage(pageNumber: number) {
   const targetSpread = Math.floor(pageNumber / 2)
 
@@ -178,15 +231,59 @@ function handleJumpToBinderPage(pageNumber: number) {
   })
 }
 
+function handleTogglePageNavigator() {
+  setIsPageNavigatorOpen((current) => !current)
+}
+
+
+function handleRenameBinderPage(pageNumber: number) {
+  const page = binderPages.find(
+    (binderPage) => binderPage.pageNumber === pageNumber
+  )
+
+  if (!page) return
+
+  setRenamingPageNumber(pageNumber)
+  setRenamePageValue(page.name ?? '')
+}
+
+function handleSaveBinderPageName() {
+  if (renamingPageNumber === null) return
+
+  const trimmedName = renamePageValue.trim().slice(0, 40)
+
+  setBinderPages((currentPages) =>
+    currentPages.map((page) =>
+      page.pageNumber === renamingPageNumber
+        ? { ...page, name: trimmedName }
+        : page
+    )
+  )
+
+  setRenamingPageNumber(null)
+  setRenamePageValue('')
+}
+
+function handleCancelBinderPageRename() {
+  setRenamingPageNumber(null)
+  setRenamePageValue('')
+}
+
+
 function handleBinderIndicatorClick(
   placements: { pageNumber: number; slotNumber: number }[]
 ) {
   if (placements.length === 0) return
 
-  if (placements.length === 1) {
-    handleJumpToBinderPage(placements[0].pageNumber)
-    return
-  }
+  
+if (placements.length === 1) {
+  const location = placements[0]
+
+  highlightBinderLocation(location)
+  handleJumpToBinderPage(location.pageNumber)
+  return
+}
+
 
   setSelectedBinderLocations(placements)
 }
@@ -263,6 +360,19 @@ async function handleViewBinderCardDetails() {
     setSelectedOccupiedSlotId(null)
   } catch (error) {
     console.error('Failed to load binder card details:', error)
+  }
+}
+
+async function handleViewCollectionCardDetails() {
+  if (!selectedManageCard) return
+
+  try {
+    const details = await getCardById(selectedManageCard.cardId)
+
+    setSelectedCard(details)
+    setSelectedManageCard(null)
+  } catch (error) {
+    console.error('Failed to load collection card details:', error)
   }
 }
 
@@ -366,12 +476,96 @@ useEffect(() => {
   )
 }, [collection])
 
+
+useEffect(() => {
+  localStorage.setItem(
+    'pokemon-binder-collection-expanded',
+    String(isCollectionExpanded)
+  )
+}, [isCollectionExpanded])
+
+useEffect(() => {
+  if (!isPageNavigatorOpen) return
+
+  function handlePointerDown(event: PointerEvent) {
+    if (
+      pageNavigatorRef.current &&
+      !pageNavigatorRef.current.contains(event.target as Node)
+    ) {
+      setIsPageNavigatorOpen(false)
+    }
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      setIsPageNavigatorOpen(false)
+    }
+  }
+
+  document.addEventListener('pointerdown', handlePointerDown)
+  document.addEventListener('keydown', handleKeyDown)
+
+  activePageOptionRef.current?.scrollIntoView({
+    block: 'nearest',
+    behavior: 'instant',
+  })
+
+  return () => {
+    document.removeEventListener('pointerdown', handlePointerDown)
+    document.removeEventListener('keydown', handleKeyDown)
+  }
+}, [isPageNavigatorOpen])
+
+
+useEffect(() => {
+  if (renamingPageNumber === null) return
+
+  function handleRenameEscape(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      setRenamingPageNumber(null)
+      setRenamePageValue('')
+    }
+  }
+
+  document.addEventListener('keydown', handleRenameEscape)
+
+  return () => {
+    document.removeEventListener('keydown', handleRenameEscape)
+  }
+}, [renamingPageNumber])
+
+
 useEffect(() => {
   localStorage.setItem(
     'pokemon-binder-pages',
     JSON.stringify(binderPages)
   )
 }, [binderPages])
+
+
+useEffect(() => {
+  if (!isRemoveCollectionConfirmOpen) return
+
+  function handleRemoveConfirmationEscape(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      event.stopImmediatePropagation()
+      handleCancelRemoveFromCollection()
+    }
+  }
+
+  document.addEventListener(
+    'keydown',
+    handleRemoveConfirmationEscape
+  )
+
+  return () => {
+    document.removeEventListener(
+      'keydown',
+      handleRemoveConfirmationEscape
+    )
+  }
+}, [isRemoveCollectionConfirmOpen])
+
 
 useEffect(() => {
   localStorage.setItem(
@@ -399,8 +593,20 @@ useEffect(() => {
 }, [])
 
 async function handleSearch() {
-  const results = await searchCards(searchTerm)
+  const trimmedSearch = searchTerm.trim()
+
+  if (!trimmedSearch) {
+    setCards([])
+    return
+  }
+
+  const results = await searchCards(trimmedSearch)
   setCards(results)
+}
+
+function handleClearSearch() {
+  setSearchTerm('')
+  setCards([])
 }
 
 async function handleAddCard(card: PokemonCard) {
@@ -456,6 +662,47 @@ function handleAddToCollection(
   setSelectedCard(null)
 }
 
+
+function handleAddBinderCardToCollection() {
+  if (!selectedOccupiedSlot?.card) return
+
+  const card = selectedOccupiedSlot.card
+  const ownedCardId = `${card.cardId}-${card.variant.variantId}`
+
+  setCollection((currentCollection) => {
+    const existingCard = currentCollection.find(
+      (ownedCard) => ownedCard.id === ownedCardId
+    )
+
+    if (existingCard) {
+      return currentCollection.map((ownedCard) =>
+        ownedCard.id === ownedCardId
+          ? {
+              ...ownedCard,
+              quantity: ownedCard.quantity + 1,
+            }
+          : ownedCard
+      )
+    }
+
+    const ownedCard: OwnedCard = {
+      id: ownedCardId,
+      cardId: card.cardId,
+      name: card.name,
+      image: card.image,
+      localId: card.localId,
+      set: card.set,
+      variant: card.variant,
+      quantity: 1,
+    }
+
+    return [...currentCollection, ownedCard]
+  })
+
+  setSelectedOccupiedSlotId(null)
+}
+
+
 function handleUpdateCollectionQuantity(quantity: number) {
   if (!selectedManageCard) return
   if (!Number.isSafeInteger(quantity) || quantity < 1) return
@@ -472,14 +719,15 @@ function handleUpdateCollectionQuantity(quantity: number) {
 }
 
 
+
 function handleRemoveFromCollection() {
   if (!selectedManageCard) return
 
-  const confirmed = window.confirm(
-    `Remove ${selectedManageCard.name} (${selectedManageCard.set.name}) from your collection?\n\nThis will remove all ${selectedManageCard.quantity} owned copies of this entry. Cards already placed in your binder will stay there.`
-  )
+  setIsRemoveCollectionConfirmOpen(true)
+}
 
-  if (!confirmed) return
+function handleConfirmRemoveFromCollection() {
+  if (!selectedManageCard) return
 
   setCollection((currentCollection) =>
     currentCollection.filter(
@@ -487,8 +735,14 @@ function handleRemoveFromCollection() {
     )
   )
 
+  setIsRemoveCollectionConfirmOpen(false)
   setSelectedManageCard(null)
 }
+
+function handleCancelRemoveFromCollection() {
+  setIsRemoveCollectionConfirmOpen(false)
+}
+
 
 
 const mainCollectionSets = Array.from(
@@ -560,27 +814,77 @@ return (
     </header>
 
     <section className="search-section">
-      <div className="search-bar">
-        <input
-          type="text"
-          placeholder="Search Pokémon cards..."
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-        />
+      
+    <form
+      className="search-bar"
+      onSubmit={(event) => {
+        event.preventDefault()
+        handleSearch()
+      }}
+    >
+    <input
+      type="text"
+      placeholder="Search Pokémon cards..."
+      value={searchTerm}
+      onChange={(event) => setSearchTerm(event.target.value)}
+    />
 
-        <button onClick={handleSearch}>
-          Search
-        </button>
-      </div>
+  {(searchTerm || cards.length > 0) && (
+    <button
+      type="button"
+      className="search-clear-button"
+      onClick={handleClearSearch}
+    >
+      Clear
+    </button>
+  )}
 
-      {cards.length > 0 && (
+  <button
+    type="submit"
+    disabled={!searchTerm.trim()}
+  >
+    Search
+  </button>
+</form>
+
+
+      
+    {cards.length > 0 && (
+      <div className="main-search-results-toolbar">
         <p className="results-count">
           {cards.length} cards found
         </p>
-      )}
+
+        <div className="main-search-view-toggle">
+          <button
+            type="button"
+            className={mainSearchView === 'grid' ? 'active' : ''}
+            onClick={() => setMainSearchView('grid')}
+            aria-pressed={mainSearchView === 'grid'}
+          >
+            ▦ Grid
+          </button>
+
+          <button
+            type="button"
+            className={mainSearchView === 'list' ? 'active' : ''}
+            onClick={() => setMainSearchView('list')}
+            aria-pressed={mainSearchView === 'list'}
+          >
+            ☰ List
+          </button>
+        </div>
+      </div>
+    )}
+
+
     </section>
 
-    <section className="card-grid">
+   <section
+      className={`card-grid ${
+        mainSearchView === 'list' ? 'main-search-list-view' : ''
+      }`}
+    >
       {cards.map((card) => (
         <CardSearchResult
           key={card.id}
@@ -806,25 +1110,53 @@ return (
         <div className="binder-view-controls">
           <button
             type="button"
+            className={`binder-view-button ${
+              isPreviewMode ? 'binder-view-button-back' : 'binder-view-button-preview'
+            }`}
+            
             onClick={async () => {
-              if (isPreviewMode && document.fullscreenElement) {
+              const returningToDesigner = isPreviewMode
+
+              if (returningToDesigner && document.fullscreenElement) {
                 await document.exitFullscreen()
               }
 
               setIsPreviewMode((current) => !current)
               setSelectedSlotId(null)
               setSelectedOccupiedSlotId(null)
+
+              if (returningToDesigner) {
+                requestAnimationFrame(() => {
+                  document.querySelector('.binder-section')?.scrollIntoView({
+                    behavior: 'instant',
+                    block: 'start',
+                  })
+                })
+              }
             }}
+
           >
-            {isPreviewMode ? '✏️ Back to Designer' : '👁️ Preview Binder'}
+            {isPreviewMode ? (
+              <>
+                <ArrowLeft size={17} strokeWidth={1.8} />
+                Back to Designer
+              </>
+            ) : (
+              <>
+                <Eye size={17} strokeWidth={1.8} />
+                Preview Binder
+              </>
+            )}
         </button>
 
         {isPreviewMode && (
           <button
             type="button"
             onClick={handleToggleFullscreen}
+            className="binder-fullscreen-button"
           >
-            {isFullscreen ? '⛶ Exit Fullscreen' : '⛶ Enter Fullscreen'}
+            <Maximize2 size={16} strokeWidth={1.8} />
+            {isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
           </button>
           )}
         </div>
@@ -836,6 +1168,8 @@ return (
           onDragStart={handleBinderDragStart}
           onDrop={handleBinderDrop}
           isPreviewMode={isPreviewMode}
+          highlightedSlotId={highlightedBinderSlotId}
+          onRenamePage={handleRenameBinderPage}
           />
 
           <div className="binder-navigation">
@@ -852,31 +1186,112 @@ return (
             {currentSpread === 0 ? '↺ Back' : '← Previous'}
           </button>
 
-          <select
-            className="binder-page-selector"
-            value={currentSpread}
-            onChange={(event) =>
-            setCurrentSpread(Number(event.target.value))
-            }
-          >
-          {Array.from(
-            { length: Math.ceil(binderPages.length / 2) + 1 },
-            (_, spread) => {
-              const label =
-                spread === 0
-                  ? 'Front / Page 1'
-                  : spread === Math.ceil(binderPages.length / 2)
-                    ? `Page ${binderPages.length} / Back`
-                    : `Pages ${spread * 2}–${spread * 2 + 1}`
 
-              return (
-                <option key={spread} value={spread}>
-                  {label}
-              </option>
-      )
-    }
+<div 
+    className="binder-page-navigator"
+    ref={pageNavigatorRef}
+>
+  <button
+    type="button"
+    className="binder-page-navigator-trigger"
+    onClick={handleTogglePageNavigator}
+    aria-expanded={isPageNavigatorOpen}
+    aria-label="Choose binder pages"
+  >
+    <BookOpen size={18} strokeWidth={1.8} />
+
+    <span className="binder-page-navigator-trigger-text">
+      {currentSpread === 0
+        ? 'Front / Page 1'
+        : currentSpread === Math.ceil(binderPages.length / 2)
+          ? `Page ${binderPages.length} / Back`
+          : `Pages ${currentSpread * 2}–${currentSpread * 2 + 1}`}
+    </span>
+
+    <ChevronDown
+      size={17}
+      className={isPageNavigatorOpen ? 'navigator-chevron-open' : ''}
+    />
+  </button>
+
+  {isPageNavigatorOpen && (
+    <div className="binder-page-navigator-menu">
+      <div className="binder-page-navigator-heading">
+        <BookOpen size={16} />
+        <span>Choose Binder Pages</span>
+      </div>
+
+      <div className="binder-page-navigator-options">
+        {Array.from(
+          { length: Math.ceil(binderPages.length / 2) + 1 },
+          (_, spread) => {
+            const lastSpread = Math.ceil(binderPages.length / 2)
+
+            const leftPageNumber = spread * 2
+            const rightPageNumber = spread * 2 + 1
+
+            const pageNumbers =
+              spread === 0
+                ? [1]
+                : spread === lastSpread
+                  ? [binderPages.length]
+                  : [leftPageNumber, rightPageNumber]
+
+            const names = pageNumbers
+              .map(
+                (pageNumber) =>
+                  binderPages.find(
+                    (page) => page.pageNumber === pageNumber
+                  )?.name
+              )
+              .filter((name): name is string => Boolean(name))
+
+            const label =
+              spread === 0
+                ? 'Front / Page 1'
+                : spread === lastSpread
+                  ? `Page ${binderPages.length} / Back`
+                  : `Pages ${leftPageNumber}–${rightPageNumber}`
+
+            return (
+              <button
+                key={spread}
+                type="button"
+                ref={currentSpread === spread ? activePageOptionRef : null}
+                className={`binder-page-navigator-option ${
+                  currentSpread === spread ? 'active' : ''
+                }`}
+                onClick={() => {
+                  setCurrentSpread(spread)
+                  setIsPageNavigatorOpen(false)
+                }}
+              >
+                
+            <span className="binder-page-navigator-option-text">
+              <span className="binder-page-navigator-option-title">
+                {label}
+              </span>
+
+              {names.length > 0 && (
+                <span className="binder-page-navigator-option-subtitle">
+                  {names.join(' / ')}
+                </span>
+              )}
+           </span>
+
+
+                {currentSpread === spread && (
+                  <Check size={17} strokeWidth={2} />
+                )}
+              </button>
+            )
+          }
+        )}
+      </div>
+    </div>
   )}
-</select>
+</div>
+
 
             <button
               type="button"
@@ -914,9 +1329,7 @@ return (
       setSelectedSlotId(selectedOccupiedSlotId)
       setSelectedOccupiedSlotId(null)
     }}
-    onAddToCollection={() => {
-      console.log('Add to collection:', selectedOccupiedSlot.card)
-    }}
+    onAddToCollection={handleAddBinderCardToCollection}
     onRemove={handleRemoveCardFromBinder}
   />
 )}
@@ -934,9 +1347,7 @@ return (
   <CollectionCardActions
     card={selectedManageCard}
     onClose={() => setSelectedManageCard(null)}
-    onViewDetails={() => {
-      console.log('View collection card:', selectedManageCard)
-    }}
+    onViewDetails={handleViewCollectionCardDetails}
     onManageQuantity={handleUpdateCollectionQuantity}
     onRemove={handleRemoveFromCollection}
   />
@@ -975,6 +1386,7 @@ return (
             key={`${location.pageNumber}-${location.slotNumber}`}
             onClick={() => {
               setSelectedBinderLocations(null)
+              highlightBinderLocation(location)
               handleJumpToBinderPage(location.pageNumber)
             }}
           >
@@ -982,6 +1394,189 @@ return (
             <span>→</span>
           </button>
         ))}
+      </div>
+    </div>
+  </div>
+)}
+
+
+{renamingPageNumber !== null && (
+  <div
+    className="rename-page-overlay"
+    onClick={handleCancelBinderPageRename}
+  >
+    <div
+      className="rename-page-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="rename-page-title"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="rename-page-header">
+        <div className="rename-page-heading">
+          <span className="rename-page-icon">
+            <Pencil size={20} strokeWidth={1.8} />
+          </span>
+
+          <div>
+            <p className="rename-page-eyebrow">
+              BINDER DESIGNER
+            </p>
+            <h3 id="rename-page-title">
+              Rename Page {renamingPageNumber}
+            </h3>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="rename-page-close"
+          onClick={handleCancelBinderPageRename}
+          aria-label="Close rename dialog"
+        >
+          <X size={19} />
+        </button>
+      </div>
+
+      <p className="rename-page-description">
+        Give this page a name to help organize your Pokémon collection.
+      </p>
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          handleSaveBinderPageName()
+        }}
+      >
+        <label
+          className="rename-page-label"
+          htmlFor="binder-page-name-input"
+        >
+          Page name
+        </label>
+
+        <input
+          id="binder-page-name-input"
+          className="rename-page-input"
+          type="text"
+          value={renamePageValue}
+          onChange={(event) => setRenamePageValue(event.target.value)}
+          maxLength={40}
+          placeholder="e.g. Johto Favorites"
+          autoFocus
+        />
+
+        <p className="rename-page-hint">
+          {renamePageValue.length}/40 characters · Leave empty to clear the name
+        </p>
+
+        <div className="rename-page-actions">
+          <button
+            type="button"
+            className="rename-page-cancel"
+            onClick={handleCancelBinderPageRename}
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            className="rename-page-save"
+          >
+            <Check size={17} strokeWidth={2} />
+            Save Name
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
+
+{isRemoveCollectionConfirmOpen && selectedManageCard && (
+  <div
+    className="remove-collection-overlay"
+    onClick={handleCancelRemoveFromCollection}
+  >
+    <div
+      className="remove-collection-modal"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="remove-collection-title"
+      aria-describedby="remove-collection-description"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="remove-collection-header">
+        <div className="remove-collection-icon">
+          <Trash2 size={21} strokeWidth={1.8} />
+        </div>
+
+        <div className="remove-collection-heading">
+          <span className="remove-collection-eyebrow">
+            COLLECTION MANAGER
+          </span>
+          <h3 id="remove-collection-title">
+            Remove from Collection?
+          </h3>
+        </div>
+
+        <button
+          type="button"
+          className="remove-collection-close"
+          onClick={handleCancelRemoveFromCollection}
+          aria-label="Close confirmation"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      <p
+        className="remove-collection-description"
+        id="remove-collection-description"
+      >
+        Are you sure you want to remove
+        <strong> {selectedManageCard.name}</strong> from your collection?
+      </p>
+
+      <div className="remove-collection-card-info">
+        <img
+          src={`${selectedManageCard.image}/high.webp`}
+          alt={selectedManageCard.name}
+        />
+
+        <div>
+          <strong>{selectedManageCard.name}</strong>
+          <span>{selectedManageCard.set.name}</span>
+          <span>Variant: {selectedManageCard.variant.type}</span>
+          <span>Owned copies: {selectedManageCard.quantity}</span>
+        </div>
+      </div>
+
+      <div className="remove-collection-notice">
+        <Info size={17} strokeWidth={1.8} />
+        <span>
+          All owned copies of this entry will be removed.
+          Cards already placed in your binder will stay there.
+        </span>
+      </div>
+
+      <div className="remove-collection-actions">
+        <button
+          type="button"
+          className="remove-collection-cancel"
+          onClick={handleCancelRemoveFromCollection}
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          className="remove-collection-confirm"
+          onClick={handleConfirmRemoveFromCollection}
+        >
+          <Trash2 size={16} strokeWidth={1.8} />
+          Remove Card
+        </button>
       </div>
     </div>
   </div>

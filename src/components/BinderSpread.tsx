@@ -8,6 +8,8 @@ interface BinderSpreadProps {
   onDragStart?: (slotId: string) => void
   onDrop?: (slotId: string) => void
   isPreviewMode?: boolean
+  highlightedSlotId: string | null
+  onRenamePage?: (pageNumber: number) => void
 }
 
 function BinderSpread({
@@ -17,6 +19,8 @@ function BinderSpread({
   onDragStart,
   onDrop,
   isPreviewMode = false,
+  highlightedSlotId,
+  onRenamePage,
 
 }: BinderSpreadProps) {
   return (
@@ -29,11 +33,10 @@ function BinderSpread({
           onDragStart={onDragStart}
           onDrop={onDrop}
           isPreviewMode={isPreviewMode}
-          
-          
-          
-          />
-        ) : (
+          highlightedSlotId={highlightedSlotId}
+          onRenamePage={onRenamePage}
+        />
+      ) : (
           <div className="binder-inside-cover">
             <p>Pokémon Binder</p>
           </div>
@@ -50,6 +53,8 @@ function BinderSpread({
           onDragStart={onDragStart}
           onDrop={onDrop}
           isPreviewMode={isPreviewMode}
+          highlightedSlotId={highlightedSlotId}
+          onRenamePage={onRenamePage}
             />
         ) : (
           <div className="binder-inside-cover">
