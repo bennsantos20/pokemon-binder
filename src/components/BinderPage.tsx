@@ -1,5 +1,5 @@
 import type { BinderPage as BinderPageType } from '../types/PokemonCards'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 interface BinderPageProps {
   page: BinderPageType
   onSlotClick?: (slotId: string) => void
@@ -32,6 +32,11 @@ function BinderPage({
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isTouchDragging = useRef(false)
   const touchSourceSlotId = useRef<string | null>(null)
+  const [floatingCard, setFloatingCard] = useState<{
+  image: string
+  x: number
+  y: number
+} | null>(null)
 
   const touchStartPosition = useRef<{ x: number; y: number } | null>(null)
 
@@ -73,6 +78,7 @@ const finishTouchDrag = (
 
   isTouchDragging.current = false
   touchSourceSlotId.current = null
+  setFloatingCard(null)
   cancelLongPress()
 }
 
@@ -92,13 +98,27 @@ const startLongPress = (
     y: touch.clientY,
   }
 
-  longPressTimer.current = setTimeout(() => {
-    longPressTimer.current = null
-    isTouchDragging.current = true
-    touchSourceSlotId.current = slotId
-    console.log('Touch drag activated:', slotId)
-  }, 350)
+  const cardImage = page.slots.find(
+    (slot) => slot.id === slotId
+  )?.card?.image
+
+  const cardImageUrl = cardImage ? `${cardImage}/high.webp` : null
+
+isTouchDragging.current = true
+touchSourceSlotId.current = slotId
+
+if (cardImageUrl) {
+  setFloatingCard({
+    image: cardImageUrl,
+    x: touch.clientX,
+    y: touch.clientY,
+  })
 }
+
+console.log('Touch drag activated:', slotId)
+}
+
+
 const moveLongPress = (event: React.TouchEvent<HTMLButtonElement>) => {
   if (!touchStartPosition.current || event.touches.length !== 1) {
     cancelLongPress()
@@ -106,6 +126,17 @@ const moveLongPress = (event: React.TouchEvent<HTMLButtonElement>) => {
   }
 
   const touch = event.touches[0]
+  if (isTouchDragging.current) {
+  setFloatingCard((current) =>
+    current
+      ? {
+          ...current,
+          x: touch.clientX,
+          y: touch.clientY,
+        }
+      : null
+  )
+}
   const deltaX = touch.clientX - touchStartPosition.current.x
   const deltaY = touch.clientY - touchStartPosition.current.y
 
@@ -157,6 +188,8 @@ const moveLongPress = (event: React.TouchEvent<HTMLButtonElement>) => {
 
           onTouchCancel={() => {
             isTouchDragging.current = false
+            setFloatingCard(null)
+            touchSourceSlotId.current = null
             cancelLongPress()
           }}
 
@@ -245,8 +278,25 @@ const moveLongPress = (event: React.TouchEvent<HTMLButtonElement>) => {
 </div>
 
 
-    </section>
+    
+
+    {floatingCard && (
+      <img
+        src={floatingCard.image}
+        alt="Dragging Pokémon card"
+        className="binder-floating-card"
+        style={{
+          left: floatingCard.x,
+          top: floatingCard.y,
+        }}
+        draggable={false}
+      />
+    )}
+
+  </section>
   )
 }
+
+
 
 export default BinderPage

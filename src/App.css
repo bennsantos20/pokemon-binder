@@ -4660,3 +4660,41 @@ background-size: 16px;
     touch-action: none;
   }
 }
+
+/* Floating card preview while touch dragging */
+.binder-floating-card {
+  position: fixed;
+  width: 95px;
+  height: auto;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.9;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Highlight the Rearrange Mode button when active */
+.binder-rearranging .binder-rearrange-button {
+  background: #2f7654;
+  color: #ffffff;
+  border: 2px solid #20583d;
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgba(47, 118, 84, 0.15);
+}
+
+/* Subtle editing indicator around the binder */
+.binder-rearranging .binder-spread {
+  outline: 3px solid #a855f7;
+  outline-offset: 5px;
+  border-radius: 12px;
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.25);
+}
+
+/* Smooth transition between modes */
+.binder-rearrange-button,
+.binder-spread {
+  transition: outline-color 0.2s ease, background-color 0.2s ease;
+}
