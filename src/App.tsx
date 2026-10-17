@@ -867,86 +867,7 @@ return (
       </div>
     </header>
 
-    <section className="search-section">
-      
-    <form
-      className="search-bar"
-      onSubmit={(event) => {
-        event.preventDefault()
-        handleSearch()
-      }}
-    >
-    <input
-      type="text"
-      placeholder="Search Pokémon cards..."
-      value={searchTerm}
-      onChange={(event) => setSearchTerm(event.target.value)}
-    />
 
-  {(searchTerm || cards.length > 0) && (
-    <button
-      type="button"
-      className="search-clear-button"
-      onClick={handleClearSearch}
-    >
-      Clear
-    </button>
-  )}
-
-  <button
-    type="submit"
-    disabled={!searchTerm.trim()}
-  >
-    Search
-  </button>
-</form>
-
-
-      
-    {cards.length > 0 && (
-      <div className="main-search-results-toolbar">
-        <p className="results-count">
-          {cards.length} cards found
-        </p>
-
-        <div className="main-search-view-toggle">
-          <button
-            type="button"
-            className={mainSearchView === 'grid' ? 'active' : ''}
-            onClick={() => setMainSearchView('grid')}
-            aria-pressed={mainSearchView === 'grid'}
-          >
-            ▦ Grid
-          </button>
-
-          <button
-            type="button"
-            className={mainSearchView === 'list' ? 'active' : ''}
-            onClick={() => setMainSearchView('list')}
-            aria-pressed={mainSearchView === 'list'}
-          >
-            ☰ List
-          </button>
-        </div>
-      </div>
-    )}
-
-
-    </section>
-
-   <section
-      className={`card-grid ${
-        mainSearchView === 'list' ? 'main-search-list-view' : ''
-      }`}
-    >
-      {cards.map((card) => (
-        <CardSearchResult
-          key={card.id}
-          card={card}
-          onAdd={handleAddCard}
-        />
-      ))}
-    </section>
 
 
 
@@ -1160,6 +1081,89 @@ return (
           </div>
 
       </section>
+
+    <section className="search-section">
+      
+    <form
+      className="search-bar"
+      onSubmit={(event) => {
+        event.preventDefault()
+        handleSearch()
+      }}
+    >
+    <input
+      type="text"
+      placeholder="Search Pokémon cards..."
+      value={searchTerm}
+      onChange={(event) => setSearchTerm(event.target.value)}
+    />
+
+  {(searchTerm || cards.length > 0) && (
+    <button
+      type="button"
+      className="search-clear-button"
+      onClick={handleClearSearch}
+    >
+      Clear
+    </button>
+  )}
+
+  <button
+    type="submit"
+    disabled={!searchTerm.trim()}
+  >
+    Search
+  </button>
+</form>
+
+
+      
+    {cards.length > 0 && (
+      <div className="main-search-results-toolbar">
+        <p className="results-count">
+          {cards.length} cards found
+        </p>
+
+        <div className="main-search-view-toggle">
+          <button
+            type="button"
+            className={mainSearchView === 'grid' ? 'active' : ''}
+            onClick={() => setMainSearchView('grid')}
+            aria-pressed={mainSearchView === 'grid'}
+          >
+            ▦ Grid
+          </button>
+
+          <button
+            type="button"
+            className={mainSearchView === 'list' ? 'active' : ''}
+            onClick={() => setMainSearchView('list')}
+            aria-pressed={mainSearchView === 'list'}
+          >
+            ☰ List
+          </button>
+        </div>
+      </div>
+    )}
+
+
+    </section>
+
+   <section
+      className={`card-grid ${
+        mainSearchView === 'list' ? 'main-search-list-view' : ''
+      }`}
+    >
+      {cards.map((card) => (
+        <CardSearchResult
+          key={card.id}
+          card={card}
+          onAdd={handleAddCard}
+        />
+      ))}
+    </section>
+
+
 
 {collection.length > 0 && (
   <section className="collection-section">

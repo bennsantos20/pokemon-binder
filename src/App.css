@@ -4552,3 +4552,8 @@ background-size: 16px;
 .collection-placement-footer button:disabled {
   display: none;
 }
+
+/* Space between binder navigation and card search */
+.binder-section + .search-section {
+  margin-top: 62px;
+}
