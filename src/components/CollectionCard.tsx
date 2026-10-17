@@ -2,6 +2,7 @@ import type { OwnedCard } from '../types/PokemonCards'
 
 interface CollectionCardProps {
   card: OwnedCard
+  displayMode: 'grid' | 'list'
   onManage: (card: OwnedCard) => void
   binderPlacements: {
     pageNumber: number
@@ -30,6 +31,7 @@ function formatVariantName(type: string) {
 
 function CollectionCard({
   card,
+  displayMode,
   onManage,
   binderPlacements,
   onBinderClick,
@@ -37,6 +39,15 @@ function CollectionCard({
   return (
     <article className="collection-card">
       <div className="collection-card-image">
+        {displayMode === 'grid' && (
+          <button
+            type="button"
+            className="collection-card-image-action"
+            onClick={() => onManage(card)}
+            aria-label={`Manage ${card.name} from ${card.set.name}`}
+            title={`Manage ${card.name}`}
+         />
+        )}
         {card.image ? (
           <img
             src={`${card.image}/high.webp`}
@@ -48,11 +59,7 @@ function CollectionCard({
           </div>
         )}
 
-        {card.quantity > 1 && (
-          <span className="quantity-badge">
-            ×{card.quantity}
-          </span>
-        )}
+        
       </div>
 
       <div className="collection-card-info">
@@ -60,7 +67,15 @@ function CollectionCard({
           {card.set.name}
         </p>
 
-        <h3>{card.name}</h3>
+        <div className="collection-card-name-row">
+          <h3>{card.name}</h3>
+
+          {card.quantity > 1 && (
+            <span className="collection-card-owned-badge">
+              ×{card.quantity} owned
+            </span>
+          )}
+        </div>
 
         <p className="collection-card-number">
           #{card.localId}
@@ -95,15 +110,17 @@ function CollectionCard({
 
 </div>
 
-<button
-  type="button"
-  className="collection-manage-button"
-  onClick={() => onManage(card)}
-  aria-label={`Manage ${card.name} from ${card.set.name}`}
-  title="Manage Card"
->
-  •••
-</button>
+{displayMode === 'list' && (
+  <button
+    type="button"
+    className="collection-manage-button"
+    onClick={() => onManage(card)}
+    aria-label={`Manage ${card.name} from ${card.set.name}`}
+    title="Manage Card"
+  >
+    ...
+  </button>
+)}
 </article>
 
 

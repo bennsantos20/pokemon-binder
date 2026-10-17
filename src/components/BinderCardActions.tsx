@@ -4,6 +4,7 @@ import { Eye, RefreshCw, LibraryBig, Trash2 } from 'lucide-react'
 
 interface BinderCardActionsProps {
   card: BinderCard
+  isOwned: boolean
   onClose: () => void
   onViewDetails: () => void
   onReplace: () => void
@@ -13,6 +14,7 @@ interface BinderCardActionsProps {
 
 function BinderCardActions({
   card,
+  isOwned,
   onClose,
   onViewDetails,
   onReplace,
@@ -45,12 +47,22 @@ function BinderCardActions({
             />
           )}
 
-          <div>
-            <h3>{card.name}</h3>
-            <p>{card.set.name}</p>
-            <p>{card.variant.type}</p>
-          </div>
+        <div>
+          <h3>{card.name}</h3>
+          <p>{card.set.name}</p>
+          <p>{card.variant.type}</p>
+
+          <span
+            className={`binder-actions-ownership ${
+              isOwned
+                ? 'binder-actions-ownership-owned'
+                : 'binder-actions-ownership-unowned'
+            }`}
+          >
+            {isOwned ? '✓ In My Collection' : 'ⓘ Not in My Collection'}
+          </span>
         </div>
+      </div>
 
         
     <div className="binder-actions-list">
@@ -66,7 +78,9 @@ function BinderCardActions({
 
       <button type="button" onClick={onAddToCollection}>
         <LibraryBig size={18} strokeWidth={1.8} />
-        <span>Add to My Collection</span>
+        <span>
+          {isOwned ? 'Add Another Copy' : 'Add to My Collection'}
+        </span>
       </button>
 
       <button

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { OwnedCard } from '../types/PokemonCards'
 import {
   Eye,
+  BookOpen,
   SlidersHorizontal,
   Trash2,
   Minus,
@@ -16,6 +17,7 @@ interface CollectionCardActionsProps {
   onClose: () => void
   onViewDetails: () => void
   onManageQuantity: (quantity: number) => void
+  onAddToBinder: () => void
   onRemove: () => void
 }
 
@@ -24,6 +26,7 @@ function CollectionCardActions({
   onClose,
   onViewDetails,
   onManageQuantity,
+  onAddToBinder,
   onRemove,
 }: CollectionCardActionsProps) {
     const [isEditingQuantity, setIsEditingQuantity] = useState(false)
@@ -71,6 +74,10 @@ function CollectionCardActions({
           <button type="button" onClick={onViewDetails}>
             <Eye size={18} strokeWidth={1.8} />
             <span>View Card Details</span>
+          </button>
+          <button type="button" onClick={onAddToBinder}>
+            <BookOpen size={18} strokeWidth={1.8} />
+            <span>Add to Binder</span>
           </button>
 
           {isEditingQuantity ? (

@@ -9,6 +9,7 @@ interface BinderSpreadProps {
   onDrop?: (slotId: string) => void
   isPreviewMode?: boolean
   highlightedSlotId: string | null
+  ownedCardIds: Set<string>
   onRenamePage?: (pageNumber: number) => void
 }
 
@@ -20,6 +21,7 @@ function BinderSpread({
   onDrop,
   isPreviewMode = false,
   highlightedSlotId,
+  ownedCardIds,
   onRenamePage,
 
 }: BinderSpreadProps) {
@@ -34,6 +36,7 @@ function BinderSpread({
           onDrop={onDrop}
           isPreviewMode={isPreviewMode}
           highlightedSlotId={highlightedSlotId}
+          ownedCardIds={ownedCardIds}
           onRenamePage={onRenamePage}
         />
       ) : (
@@ -54,6 +57,7 @@ function BinderSpread({
           onDrop={onDrop}
           isPreviewMode={isPreviewMode}
           highlightedSlotId={highlightedSlotId}
+          ownedCardIds={ownedCardIds}
           onRenamePage={onRenamePage}
             />
         ) : (

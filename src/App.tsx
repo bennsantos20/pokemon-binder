@@ -17,6 +17,7 @@ import BinderCardPicker from './components/BinderCardPicker'
 import BinderCardActions from './components/BinderCardActions'
 import CollectionCardActions from './components/CollectionCardActions'
 import { BookOpen, ChevronDown, Check, Pencil, X, Eye, ArrowLeft, Maximize2, Trash2, Info} from 'lucide-react'
+import CollectionBinderPlacement from './components/CollectionBinderPlacement'
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -37,6 +38,8 @@ function App() {
   const [mainCollectionDisplay, setMainCollectionDisplay] =
     useState<'grid' | 'list'>('grid')
   const [selectedManageCard, setSelectedManageCard] =
+    useState<OwnedCard | null>(null)
+  const [selectedCardToPlace, setSelectedCardToPlace] =
     useState<OwnedCard | null>(null)
   const [isRemoveCollectionConfirmOpen, setIsRemoveCollectionConfirmOpen] =
   useState(false)
@@ -314,6 +317,12 @@ const rightPage =
     return []
   }
 })
+
+const ownedCardIds = new Set(
+  collection
+    .filter((card) => card.quantity > 0)
+    .map((card) => card.id)
+)
 
 function handleBinderSlotClick(slotId: string) {
   const slot = binderPages
@@ -894,6 +903,219 @@ return (
       ))}
     </section>
 
+
+
+      <section className="binder-section">
+        <div className="binder-section-header">
+          <p className="eyebrow">BINDER DESIGNER</p>
+          <h2>My Binder</h2>
+        </div>
+
+        <div className="binder-view-controls">
+          <button
+            type="button"
+            className={`binder-view-button ${
+              isPreviewMode ? 'binder-view-button-back' : 'binder-view-button-preview'
+            }`}
+            
+            onClick={async () => {
+              const returningToDesigner = isPreviewMode
+
+              if (returningToDesigner && document.fullscreenElement) {
+                await document.exitFullscreen()
+              }
+
+              setIsPreviewMode((current) => !current)
+              setSelectedSlotId(null)
+              setSelectedOccupiedSlotId(null)
+
+              if (returningToDesigner) {
+                requestAnimationFrame(() => {
+                  document.querySelector('.binder-section')?.scrollIntoView({
+                    behavior: 'instant',
+                    block: 'start',
+                  })
+                })
+              }
+            }}
+
+          >
+            {isPreviewMode ? (
+              <>
+                <ArrowLeft size={17} strokeWidth={1.8} />
+                Back to Designer
+              </>
+            ) : (
+              <>
+                <Eye size={17} strokeWidth={1.8} />
+                Preview Binder
+              </>
+            )}
+        </button>
+
+        {isPreviewMode && (
+          <button
+            type="button"
+            onClick={handleToggleFullscreen}
+            className="binder-fullscreen-button"
+          >
+            <Maximize2 size={16} strokeWidth={1.8} />
+            {isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          </button>
+          )}
+        </div>
+
+         <BinderSpread
+          leftPage={leftPage}
+          rightPage={rightPage}
+          onSlotClick={handleBinderSlotClick}
+          onDragStart={handleBinderDragStart}
+          onDrop={handleBinderDrop}
+          isPreviewMode={isPreviewMode}
+          highlightedSlotId={highlightedBinderSlotId}
+          ownedCardIds={ownedCardIds}
+          onRenamePage={handleRenameBinderPage}
+          />
+
+          <div className="binder-navigation">
+            <button
+              type="button"
+              onClick={() =>
+              setCurrentSpread((spread) =>
+                spread === 0
+                  ? Math.ceil(binderPages.length / 2)
+                  : spread - 1
+              )
+            }
+          >
+            {currentSpread === 0 ? '↺ Back' : '← Previous'}
+          </button>
+
+
+<div 
+    className="binder-page-navigator"
+    ref={pageNavigatorRef}
+>
+  <button
+    type="button"
+    className="binder-page-navigator-trigger"
+    onClick={handleTogglePageNavigator}
+    aria-expanded={isPageNavigatorOpen}
+    aria-label="Choose binder pages"
+  >
+    <BookOpen size={18} strokeWidth={1.8} />
+
+    <span className="binder-page-navigator-trigger-text">
+      {currentSpread === 0
+        ? 'Front / Page 1'
+        : currentSpread === Math.ceil(binderPages.length / 2)
+          ? `Page ${binderPages.length} / Back`
+          : `Pages ${currentSpread * 2}–${currentSpread * 2 + 1}`}
+    </span>
+
+    <ChevronDown
+      size={17}
+      className={isPageNavigatorOpen ? 'navigator-chevron-open' : ''}
+    />
+  </button>
+
+  {isPageNavigatorOpen && (
+    <div className="binder-page-navigator-menu">
+      <div className="binder-page-navigator-heading">
+        <BookOpen size={16} />
+        <span>Choose Binder Pages</span>
+      </div>
+
+      <div className="binder-page-navigator-options">
+        {Array.from(
+          { length: Math.ceil(binderPages.length / 2) + 1 },
+          (_, spread) => {
+            const lastSpread = Math.ceil(binderPages.length / 2)
+
+            const leftPageNumber = spread * 2
+            const rightPageNumber = spread * 2 + 1
+
+            const pageNumbers =
+              spread === 0
+                ? [1]
+                : spread === lastSpread
+                  ? [binderPages.length]
+                  : [leftPageNumber, rightPageNumber]
+
+            const names = pageNumbers
+              .map(
+                (pageNumber) =>
+                  binderPages.find(
+                    (page) => page.pageNumber === pageNumber
+                  )?.name
+              )
+              .filter((name): name is string => Boolean(name))
+
+            const label =
+              spread === 0
+                ? 'Front / Page 1'
+                : spread === lastSpread
+                  ? `Page ${binderPages.length} / Back`
+                  : `Pages ${leftPageNumber}–${rightPageNumber}`
+
+            return (
+              <button
+                key={spread}
+                type="button"
+                ref={currentSpread === spread ? activePageOptionRef : null}
+                className={`binder-page-navigator-option ${
+                  currentSpread === spread ? 'active' : ''
+                }`}
+                onClick={() => {
+                  setCurrentSpread(spread)
+                  setIsPageNavigatorOpen(false)
+                }}
+              >
+                
+            <span className="binder-page-navigator-option-text">
+              <span className="binder-page-navigator-option-title">
+                {label}
+              </span>
+
+              {names.length > 0 && (
+                <span className="binder-page-navigator-option-subtitle">
+                  {names.join(' / ')}
+                </span>
+              )}
+           </span>
+
+
+                {currentSpread === spread && (
+                  <Check size={17} strokeWidth={2} />
+                )}
+              </button>
+            )
+          }
+        )}
+      </div>
+    </div>
+  )}
+</div>
+
+
+            <button
+              type="button"
+              onClick={() =>
+              setCurrentSpread((spread) =>
+              spread === Math.ceil(binderPages.length / 2)
+                ? 0
+                : spread + 1
+              )
+            }
+            >
+              {currentSpread === Math.ceil(binderPages.length / 2)
+                ? 'Front ↻'
+                : 'Next →'}
+            </button>
+          </div>
+
+      </section>
+
 {collection.length > 0 && (
   <section className="collection-section">
     <div className="collection-header">
@@ -1066,6 +1288,7 @@ return (
             <CollectionCard
               key={card.id}
               card={card}
+              displayMode={mainCollectionDisplay}
               onManage={setSelectedManageCard}
               binderPlacements={getBinderPlacements(card)}
               onBinderClick={handleBinderIndicatorClick}
@@ -1101,215 +1324,8 @@ return (
   </section>
 )}
 
-      <section className="binder-section">
-        <div className="binder-section-header">
-          <p className="eyebrow">BINDER DESIGNER</p>
-          <h2>My Binder</h2>
-        </div>
-
-        <div className="binder-view-controls">
-          <button
-            type="button"
-            className={`binder-view-button ${
-              isPreviewMode ? 'binder-view-button-back' : 'binder-view-button-preview'
-            }`}
-            
-            onClick={async () => {
-              const returningToDesigner = isPreviewMode
-
-              if (returningToDesigner && document.fullscreenElement) {
-                await document.exitFullscreen()
-              }
-
-              setIsPreviewMode((current) => !current)
-              setSelectedSlotId(null)
-              setSelectedOccupiedSlotId(null)
-
-              if (returningToDesigner) {
-                requestAnimationFrame(() => {
-                  document.querySelector('.binder-section')?.scrollIntoView({
-                    behavior: 'instant',
-                    block: 'start',
-                  })
-                })
-              }
-            }}
-
-          >
-            {isPreviewMode ? (
-              <>
-                <ArrowLeft size={17} strokeWidth={1.8} />
-                Back to Designer
-              </>
-            ) : (
-              <>
-                <Eye size={17} strokeWidth={1.8} />
-                Preview Binder
-              </>
-            )}
-        </button>
-
-        {isPreviewMode && (
-          <button
-            type="button"
-            onClick={handleToggleFullscreen}
-            className="binder-fullscreen-button"
-          >
-            <Maximize2 size={16} strokeWidth={1.8} />
-            {isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-          </button>
-          )}
-        </div>
-
-         <BinderSpread
-          leftPage={leftPage}
-          rightPage={rightPage}
-          onSlotClick={handleBinderSlotClick}
-          onDragStart={handleBinderDragStart}
-          onDrop={handleBinderDrop}
-          isPreviewMode={isPreviewMode}
-          highlightedSlotId={highlightedBinderSlotId}
-          onRenamePage={handleRenameBinderPage}
-          />
-
-          <div className="binder-navigation">
-            <button
-              type="button"
-              onClick={() =>
-              setCurrentSpread((spread) =>
-                spread === 0
-                  ? Math.ceil(binderPages.length / 2)
-                  : spread - 1
-              )
-            }
-          >
-            {currentSpread === 0 ? '↺ Back' : '← Previous'}
-          </button>
 
 
-<div 
-    className="binder-page-navigator"
-    ref={pageNavigatorRef}
->
-  <button
-    type="button"
-    className="binder-page-navigator-trigger"
-    onClick={handleTogglePageNavigator}
-    aria-expanded={isPageNavigatorOpen}
-    aria-label="Choose binder pages"
-  >
-    <BookOpen size={18} strokeWidth={1.8} />
-
-    <span className="binder-page-navigator-trigger-text">
-      {currentSpread === 0
-        ? 'Front / Page 1'
-        : currentSpread === Math.ceil(binderPages.length / 2)
-          ? `Page ${binderPages.length} / Back`
-          : `Pages ${currentSpread * 2}–${currentSpread * 2 + 1}`}
-    </span>
-
-    <ChevronDown
-      size={17}
-      className={isPageNavigatorOpen ? 'navigator-chevron-open' : ''}
-    />
-  </button>
-
-  {isPageNavigatorOpen && (
-    <div className="binder-page-navigator-menu">
-      <div className="binder-page-navigator-heading">
-        <BookOpen size={16} />
-        <span>Choose Binder Pages</span>
-      </div>
-
-      <div className="binder-page-navigator-options">
-        {Array.from(
-          { length: Math.ceil(binderPages.length / 2) + 1 },
-          (_, spread) => {
-            const lastSpread = Math.ceil(binderPages.length / 2)
-
-            const leftPageNumber = spread * 2
-            const rightPageNumber = spread * 2 + 1
-
-            const pageNumbers =
-              spread === 0
-                ? [1]
-                : spread === lastSpread
-                  ? [binderPages.length]
-                  : [leftPageNumber, rightPageNumber]
-
-            const names = pageNumbers
-              .map(
-                (pageNumber) =>
-                  binderPages.find(
-                    (page) => page.pageNumber === pageNumber
-                  )?.name
-              )
-              .filter((name): name is string => Boolean(name))
-
-            const label =
-              spread === 0
-                ? 'Front / Page 1'
-                : spread === lastSpread
-                  ? `Page ${binderPages.length} / Back`
-                  : `Pages ${leftPageNumber}–${rightPageNumber}`
-
-            return (
-              <button
-                key={spread}
-                type="button"
-                ref={currentSpread === spread ? activePageOptionRef : null}
-                className={`binder-page-navigator-option ${
-                  currentSpread === spread ? 'active' : ''
-                }`}
-                onClick={() => {
-                  setCurrentSpread(spread)
-                  setIsPageNavigatorOpen(false)
-                }}
-              >
-                
-            <span className="binder-page-navigator-option-text">
-              <span className="binder-page-navigator-option-title">
-                {label}
-              </span>
-
-              {names.length > 0 && (
-                <span className="binder-page-navigator-option-subtitle">
-                  {names.join(' / ')}
-                </span>
-              )}
-           </span>
-
-
-                {currentSpread === spread && (
-                  <Check size={17} strokeWidth={2} />
-                )}
-              </button>
-            )
-          }
-        )}
-      </div>
-    </div>
-  )}
-</div>
-
-
-            <button
-              type="button"
-              onClick={() =>
-              setCurrentSpread((spread) =>
-              spread === Math.ceil(binderPages.length / 2)
-                ? 0
-                : spread + 1
-              )
-            }
-            >
-              {currentSpread === Math.ceil(binderPages.length / 2)
-                ? 'Front ↻'
-                : 'Next →'}
-            </button>
-          </div>
-
-      </section>
 
     {selectedSlotId && (
       <BinderCardPicker
@@ -1321,18 +1337,21 @@ return (
     )}
 
     {selectedOccupiedSlot?.card && (
-  <BinderCardActions
-    card={selectedOccupiedSlot.card}
-    onClose={() => setSelectedOccupiedSlotId(null)}
-    onViewDetails={handleViewBinderCardDetails}
-    onReplace={() => {
-      setSelectedSlotId(selectedOccupiedSlotId)
-      setSelectedOccupiedSlotId(null)
-    }}
-    onAddToCollection={handleAddBinderCardToCollection}
-    onRemove={handleRemoveCardFromBinder}
-  />
-)}
+      <BinderCardActions
+        card={selectedOccupiedSlot.card}
+        isOwned={ownedCardIds.has(
+          `${selectedOccupiedSlot.card.cardId}-${selectedOccupiedSlot.card.variant.variantId}`
+        )}
+        onClose={() => setSelectedOccupiedSlotId(null)}
+        onViewDetails={handleViewBinderCardDetails}
+        onReplace={() => {
+          setSelectedSlotId(selectedOccupiedSlotId)
+          setSelectedOccupiedSlotId(null)
+        }}
+        onAddToCollection={handleAddBinderCardToCollection}
+        onRemove={handleRemoveCardFromBinder}
+      />
+    )}
 
     {selectedCard && (
       <CardDetailsModal
@@ -1342,14 +1361,28 @@ return (
       />
 )}
 
-
 {selectedManageCard && (
-  <CollectionCardActions
-    card={selectedManageCard}
-    onClose={() => setSelectedManageCard(null)}
-    onViewDetails={handleViewCollectionCardDetails}
-    onManageQuantity={handleUpdateCollectionQuantity}
-    onRemove={handleRemoveFromCollection}
+<CollectionCardActions
+  card={selectedManageCard}
+  onClose={() => setSelectedManageCard(null)}
+  onViewDetails={handleViewCollectionCardDetails}
+  onManageQuantity={handleUpdateCollectionQuantity}
+  onAddToBinder={() => {
+    setSelectedCardToPlace(selectedManageCard)
+    setSelectedManageCard(null)
+  }}
+  onRemove={handleRemoveFromCollection}
+/>
+)}
+
+{selectedCardToPlace && (
+  <CollectionBinderPlacement
+    card={selectedCardToPlace}
+    pages={binderPages}
+    onClose={() => setSelectedCardToPlace(null)}
+    onSelectPocket={(pageNumber, slotId) => {
+      console.log('Selected binder pocket:', pageNumber, slotId)
+    }}
   />
 )}
 

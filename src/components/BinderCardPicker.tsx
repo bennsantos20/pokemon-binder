@@ -28,6 +28,9 @@ function BinderCardPicker({
 }: BinderCardPickerProps) {
     const [view, setView] = 
       useState<'options' | 'search' | 'collection'>('options')
+    
+    const [searchDisplay, setSearchDisplay] =
+      useState<'grid' | 'list'>('grid')
 
     const [searchTerm, setSearchTerm] = useState('')
     const [collectionSearchTerm, setCollectionSearchTerm] = useState('')
@@ -173,7 +176,7 @@ function handlePlaceCollectionCard() {
           Selected pocket:{' '}
           {slotId
             .replace(/^page-(\d+)-slot-(\d+)$/, 'Page $1 · Pocket $2')}
-        </p>
+      </p>
     {view === 'options' ? (
         <div className="binder-picker-options">
           <button
@@ -222,7 +225,7 @@ function handlePlaceCollectionCard() {
         <ArrowLeft size={17} strokeWidth={2} />
         <span>Back to Results</span>
       </button>
-
+    <div className="binder-placement-content">
       <div className="binder-placement-card">
         {selectedCard.image && (
           <img
@@ -230,7 +233,7 @@ function handlePlaceCollectionCard() {
             alt={selectedCard.name}
           />
         )}
-
+      </div>
         <div className="binder-placement-info">
           <p className="eyebrow">
             {selectedCard.set?.name ?? 'Pokémon Card'}
@@ -277,7 +280,8 @@ function handlePlaceCollectionCard() {
         </button>
         </div>
       </div>
-    </div>
+      </div>
+    
 ) : (
   <div style={{ display: view === 'collection' ? 'none' : undefined }}>
    <button
@@ -320,8 +324,32 @@ function handlePlaceCollectionCard() {
   </p>
 )}
 
+<div className="binder-search-view-toggle">
+  <button
+    type="button"
+    className={searchDisplay === 'grid' ? 'active' : ''}
+    onClick={() => setSearchDisplay('grid')}
+    aria-pressed={searchDisplay === 'grid'}
+  >
+    Grid
+  </button>
+
+  <button
+    type="button"
+    className={searchDisplay === 'list' ? 'active' : ''}
+    onClick={() => setSearchDisplay('list')}
+    aria-pressed={searchDisplay === 'list'}
+  >
+    List
+  </button>
+</div>
+
 {searchResults.length > 0 && (
-  <div className="binder-search-results">
+      <div
+        className={`binder-search-results ${
+          searchDisplay === 'list' ? 'binder-search-results-list' : ''
+        }`}
+      >
     {searchResults.map((card) => (
       <button
         className="binder-search-result"

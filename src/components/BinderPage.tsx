@@ -6,6 +6,7 @@ interface BinderPageProps {
   onDrop?: (slotId: string) => void
   isPreviewMode?: boolean
   highlightedSlotId: string | null
+  ownedCardIds: Set<string>
   onRenamePage?: (pageNumber: number) => void
 }
 
@@ -16,6 +17,7 @@ function BinderPage({
     onDrop,
     isPreviewMode = false,
     highlightedSlotId,
+    ownedCardIds,
     onRenamePage,
 }: BinderPageProps) {
 
@@ -33,6 +35,14 @@ function BinderPage({
             className={`binder-pocket ${
               !isPreviewMode && highlightedSlotId === slot.id
                 ? 'binder-pocket-highlighted'
+                : ''
+            } ${
+             !isPreviewMode &&
+              slot.card &&
+              !ownedCardIds.has(
+                `${slot.card.cardId}-${slot.card.variant.variantId}`
+              )
+                ? 'binder-pocket-unowned'
                 : ''
             }`}
             type="button"
