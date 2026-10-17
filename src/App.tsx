@@ -885,7 +885,7 @@ return (
       <p className="eyebrow">POKÉMON TCG BINDER PLANNER</p>
       <h1>Pokémon Binder</h1>
       <p className="subtitle">
-        Build your binder before moving a single card.
+        Property of Noli Santos
       </p>
       <div className="collection-summary">
         <span>Collection</span>
@@ -1466,6 +1466,10 @@ return (
     )}
   </section>
 )}
+
+<footer className="app-footer">
+  Made with love for my Kora
+</footer>
 
 
 
