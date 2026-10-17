@@ -1,5 +1,6 @@
 import type { BinderPage as BinderPageType } from '../types/PokemonCards'
 import BinderPage from './BinderPage'
+import { useRef } from 'react'
 
 interface BinderSpreadProps {
   leftPage?: BinderPageType
@@ -11,6 +12,7 @@ interface BinderSpreadProps {
   highlightedSlotId: string | null
   ownedCardIds: Set<string>
   onRenamePage?: (pageNumber: number) => void
+  onSwipe?: (direction: 'left' | 'right') => void
 }
 
 function BinderSpread({
@@ -23,10 +25,43 @@ function BinderSpread({
   highlightedSlotId,
   ownedCardIds,
   onRenamePage,
+  onSwipe,
 
 }: BinderSpreadProps) {
+  const touchStart = useRef<{ x: number; y: number } | null>(null)
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0]
+
+    touchStart.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+    }
+  }
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!touchStart.current || !onSwipe) return
+
+    const touch = event.changedTouches[0]
+
+    const deltaX = touch.clientX - touchStart.current.x
+    const deltaY = touch.clientY - touchStart.current.y
+
+    touchStart.current = null
+
+    // Ignore vertical scrolling and short movements
+    if (Math.abs(deltaX) < 60) return
+    if (Math.abs(deltaX) < Math.abs(deltaY) * 1.5) return
+
+    onSwipe(deltaX < 0 ? 'left' : 'right')
+  }
+
   return (
-    <div className="binder-spread">
+    <div
+      className="binder-spread"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="binder-spread-side binder-spread-left">
         {leftPage ? (
           <BinderPage

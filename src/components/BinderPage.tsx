@@ -4,6 +4,8 @@ interface BinderPageProps {
   onSlotClick?: (slotId: string) => void
   onDragStart?: (slotId: string) => void
   onDrop?: (slotId: string) => void
+  onTouchDragStart?: (slotId: string) => void
+  onTouchDragEnd?: (slotId: string) => void
   isPreviewMode?: boolean
   highlightedSlotId: string | null
   ownedCardIds: Set<string>
@@ -15,6 +17,8 @@ function BinderPage({
     onSlotClick,
     onDragStart,
     onDrop,
+    onTouchDragStart,
+    onTouchDragEnd,
     isPreviewMode = false,
     highlightedSlotId,
     ownedCardIds,

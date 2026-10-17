@@ -967,6 +967,21 @@ return (
           highlightedSlotId={highlightedBinderSlotId}
           ownedCardIds={ownedCardIds}
           onRenamePage={handleRenameBinderPage}
+          onSwipe={(direction) => {
+            if (isMobile) {
+              setMobilePage((page) =>
+                direction === 'left'
+                  ? Math.min(40, page + 1)
+                  : Math.max(1, page - 1)
+              )
+            } else {
+              setCurrentSpread((spread) =>
+                direction === 'left'
+                  ? Math.min(20, spread + 1)
+                  : Math.max(0, spread - 1)
+              )
+            }
+          }}
           />
 
           <div className="binder-navigation">
