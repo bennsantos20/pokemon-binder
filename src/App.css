@@ -4619,3 +4619,44 @@ background-size: 16px;
 
   transform: translateY(80px);
 }
+
+/* Prevent native image menus during touchscreen card dragging */
+@media (pointer: coarse) {
+  .binder-pocket img {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .binder-pocket {
+    -webkit-touch-callout: none;
+  }
+}
+
+/* Allow custom touch gestures on binder pockets */
+
+
+/* Rearrange button: hidden on mouse-only devices */
+.binder-rearrange-button {
+  display: none;
+}
+
+/* Show on touch-oriented devices, including iPads */
+@media (pointer: coarse) {
+  .binder-rearrange-button {
+    display: inline-flex;
+  }
+}
+
+/* Browse Mode: allow normal vertical scrolling */
+@media (pointer: coarse) {
+  .binder-pocket {
+    touch-action: pan-y;
+  }
+
+  /* Rearrange Mode: prevent native scrolling during card dragging */
+  .binder-rearranging .binder-pocket {
+    touch-action: none;
+  }
+}

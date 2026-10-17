@@ -98,6 +98,7 @@ const [mobilePage, setMobilePage] = useState(1)
 const [isMobile, setIsMobile] = useState(
   () => window.matchMedia('(max-width: 800px)').matches
 )
+const [isRearrangeMode, setIsRearrangeMode] = useState(false)
 
 useEffect(() => {
   const mediaQuery = window.matchMedia('(max-width: 800px)')
@@ -427,8 +428,11 @@ function handleBinderDragStart(slotId: string) {
   setDraggedSlotId(slotId)
 }
 
-function handleBinderDrop(targetSlotId: string) {
-  if (!draggedSlotId || draggedSlotId === targetSlotId) {
+function handleBinderDrop(
+  targetSlotId: string,
+  sourceSlotId: string | null = draggedSlotId
+) {
+  if (!sourceSlotId || sourceSlotId === targetSlotId) {
     setDraggedSlotId(null)
     return
   }
@@ -437,7 +441,7 @@ function handleBinderDrop(targetSlotId: string) {
     const allSlots = currentPages.flatMap((page) => page.slots)
 
     const sourceSlot = allSlots.find(
-      (slot) => slot.id === draggedSlotId
+      (slot) => slot.id === sourceSlotId
     )
 
     const targetSlot = allSlots.find(
@@ -454,7 +458,7 @@ function handleBinderDrop(targetSlotId: string) {
     return currentPages.map((page) => ({
       ...page,
       slots: page.slots.map((slot) => {
-        if (slot.id === draggedSlotId) {
+        if (slot.id === sourceSlotId) {
           return { ...slot, card: targetCard }
         }
 
@@ -897,7 +901,9 @@ return (
 
 
 
-      <section className="binder-section">
+      <section
+        className={`binder-section ${isRearrangeMode ? 'binder-rearranging' : ''}`}
+      >
         <div className="binder-section-header">
           <p className="eyebrow">BINDER DESIGNER</p>
           <h2>My Binder</h2>
@@ -945,6 +951,17 @@ return (
             )}
         </button>
 
+        {!isPreviewMode && (
+          <button
+            type="button"
+            className="binder-view-button binder-view-button-preview binder-rearrange-button"
+            onClick={() => setIsRearrangeMode((current) => !current)}
+            aria-pressed={isRearrangeMode}
+          >
+            {isRearrangeMode ? '✓ Done Rearranging' : '↔ Rearrange Cards'}
+          </button>
+        )}
+
         {isPreviewMode && (
           <button
             type="button"
@@ -963,11 +980,17 @@ return (
           onSlotClick={handleBinderSlotClick}
           onDragStart={handleBinderDragStart}
           onDrop={handleBinderDrop}
+          onTouchCardDrop={(sourceSlotId, targetSlotId) => {
+            handleBinderDrop(targetSlotId, sourceSlotId)
+          }}
           isPreviewMode={isPreviewMode}
+          isRearrangeMode={isRearrangeMode}
           highlightedSlotId={highlightedBinderSlotId}
           ownedCardIds={ownedCardIds}
           onRenamePage={handleRenameBinderPage}
           onSwipe={(direction) => {
+            if (isRearrangeMode) return
+            
             if (isMobile) {
               setMobilePage((page) =>
                 direction === 'left'

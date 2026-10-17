@@ -1,4 +1,5 @@
 import type { BinderPage as BinderPageType } from '../types/PokemonCards'
+import { useRef } from 'react'
 interface BinderPageProps {
   page: BinderPageType
   onSlotClick?: (slotId: string) => void
@@ -7,9 +8,11 @@ interface BinderPageProps {
   onTouchDragStart?: (slotId: string) => void
   onTouchDragEnd?: (slotId: string) => void
   isPreviewMode?: boolean
+  isRearrangeMode?: boolean
   highlightedSlotId: string | null
   ownedCardIds: Set<string>
   onRenamePage?: (pageNumber: number) => void
+  onTouchCardDrop?: (sourceSlotId: string, targetSlotId: string) => void
 }
 
 function BinderPage({
@@ -20,10 +23,96 @@ function BinderPage({
     onTouchDragStart,
     onTouchDragEnd,
     isPreviewMode = false,
+    isRearrangeMode = false,
     highlightedSlotId,
     ownedCardIds,
     onRenamePage,
+    onTouchCardDrop,
 }: BinderPageProps) {
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isTouchDragging = useRef(false)
+  const touchSourceSlotId = useRef<string | null>(null)
+
+  const touchStartPosition = useRef<{ x: number; y: number } | null>(null)
+
+const cancelLongPress = () => {
+  if (longPressTimer.current !== null) {
+    clearTimeout(longPressTimer.current)
+    longPressTimer.current = null
+  }
+
+  touchStartPosition.current = null
+}
+
+const finishTouchDrag = (
+  event: React.TouchEvent<HTMLButtonElement>
+) => {
+  if (isTouchDragging.current) {
+    const touch = event.changedTouches[0]
+
+    if (touch) {
+      const element = document.elementFromPoint(
+        touch.clientX,
+        touch.clientY
+      )
+
+      const targetPocket = element?.closest(
+        '[data-binder-slot-id]'
+      )
+
+      const targetSlotId = targetPocket?.getAttribute(
+        'data-binder-slot-id'
+      )
+
+      console.log('Dropped over pocket:', targetSlotId)
+      if (touchSourceSlotId.current && targetSlotId) {
+        onTouchCardDrop?.(touchSourceSlotId.current, targetSlotId)
+      }
+    }
+  }
+
+  isTouchDragging.current = false
+  touchSourceSlotId.current = null
+  cancelLongPress()
+}
+
+const startLongPress = (
+  event: React.TouchEvent<HTMLButtonElement>,
+  slotId: string,
+  hasCard: boolean
+) => {
+  if (!isRearrangeMode || isPreviewMode || !hasCard || event.touches.length !== 1) return
+
+  cancelLongPress()
+
+  const touch = event.touches[0]
+
+  touchStartPosition.current = {
+    x: touch.clientX,
+    y: touch.clientY,
+  }
+
+  longPressTimer.current = setTimeout(() => {
+    longPressTimer.current = null
+    isTouchDragging.current = true
+    touchSourceSlotId.current = slotId
+    console.log('Touch drag activated:', slotId)
+  }, 350)
+}
+const moveLongPress = (event: React.TouchEvent<HTMLButtonElement>) => {
+  if (!touchStartPosition.current || event.touches.length !== 1) {
+    cancelLongPress()
+    return
+  }
+
+  const touch = event.touches[0]
+  const deltaX = touch.clientX - touchStartPosition.current.x
+  const deltaY = touch.clientY - touchStartPosition.current.y
+
+  if (!isTouchDragging.current && Math.hypot(deltaX, deltaY) > 12) {
+    cancelLongPress()
+  }
+}
 
   return (
     <section className="binder-page">
@@ -51,11 +140,36 @@ function BinderPage({
             }`}
             type="button"
             key={slot.id}
+            data-binder-slot-id={slot.id}
             onClick={() => {
                 if (!isPreviewMode) {
                     onSlotClick?.(slot.id)
                 }
             }}
+          onTouchStart={(event) => {
+            startLongPress(event, slot.id, Boolean(slot.card))
+          }}
+          onTouchMove={moveLongPress}
+          onTouchEnd={(event) => {
+            finishTouchDrag(event)
+          }}
+
+
+          onTouchCancel={() => {
+            isTouchDragging.current = false
+            cancelLongPress()
+          }}
+
+
+            onContextMenu={(event) => {
+              if (event.nativeEvent instanceof MouseEvent && event.nativeEvent.button === 2) {
+                return
+              }
+
+              event.preventDefault()
+            }}
+
+
             draggable={Boolean(slot.card) && !isPreviewMode}
             onDragStart={() => {
                 if (slot.card && !isPreviewMode) {

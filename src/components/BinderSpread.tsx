@@ -8,7 +8,9 @@ interface BinderSpreadProps {
   onSlotClick?: (slotId: string) => void
   onDragStart?: (slotId: string) => void
   onDrop?: (slotId: string) => void
+  onTouchCardDrop?: (sourceSlotId: string, targetSlotId: string) => void
   isPreviewMode?: boolean
+  isRearrangeMode?: boolean
   highlightedSlotId: string | null
   ownedCardIds: Set<string>
   onRenamePage?: (pageNumber: number) => void
@@ -21,7 +23,9 @@ function BinderSpread({
   onSlotClick,
   onDragStart,
   onDrop,
+  onTouchCardDrop,
   isPreviewMode = false,
+  isRearrangeMode = false,
   highlightedSlotId,
   ownedCardIds,
   onRenamePage,
@@ -40,6 +44,11 @@ function BinderSpread({
   }
 
   const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest('[data-touch-card-dragging="true"]')) {
+      touchStart.current = null
+      return
+    }
+
     if (!touchStart.current || !onSwipe) return
 
     const touch = event.changedTouches[0]
@@ -69,7 +78,9 @@ function BinderSpread({
           onSlotClick={onSlotClick}
           onDragStart={onDragStart}
           onDrop={onDrop}
+          onTouchCardDrop={onTouchCardDrop}
           isPreviewMode={isPreviewMode}
+          isRearrangeMode={isRearrangeMode}
           highlightedSlotId={highlightedSlotId}
           ownedCardIds={ownedCardIds}
           onRenamePage={onRenamePage}
@@ -90,7 +101,9 @@ function BinderSpread({
           onSlotClick={onSlotClick}
           onDragStart={onDragStart}
           onDrop={onDrop}
+          onTouchCardDrop={onTouchCardDrop}
           isPreviewMode={isPreviewMode}
+          isRearrangeMode={isRearrangeMode}
           highlightedSlotId={highlightedSlotId}
           ownedCardIds={ownedCardIds}
           onRenamePage={onRenamePage}
