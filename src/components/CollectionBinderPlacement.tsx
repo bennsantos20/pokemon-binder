@@ -26,13 +26,15 @@ function CollectionBinderPlacement({
   const [pageIndex, setPageIndex] = useState(0)
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
   const [isPageMenuOpen, setIsPageMenuOpen] = useState(false)
-    const [pageSearch, setPageSearch] = useState('')
+  const [isReplaceConfirmOpen, setIsReplaceConfirmOpen] = useState(false)
+  const [pageSearch, setPageSearch] = useState('')
     const pageMenuRef = useRef<HTMLDivElement>(null)
     const pageSearchRef = useRef<HTMLInputElement>(null)
 
 function goToPage(index: number) {
   setPageIndex(index)
   setSelectedSlotId(null)
+  setIsReplaceConfirmOpen(false)
   setIsPageMenuOpen(false)
   setPageSearch('')
 }
@@ -231,7 +233,10 @@ function changePage(direction: number) {
               className={`collection-placement-pocket ${
                 selectedSlotId === slot.id ? 'selected' : ''
               }`}
-              onClick={() => setSelectedSlotId(slot.id)}
+              onClick={() => {
+                setSelectedSlotId(slot.id)
+                setIsReplaceConfirmOpen(false)
+              }}
               title={
                 slot.card
                   ? `Pocket ${index + 1}: ${slot.card.name}`
@@ -256,6 +261,41 @@ function changePage(direction: number) {
           ))}
         </div>
 
+          {isReplaceConfirmOpen && selectedSlot?.card && (
+            <div className="collection-placement-confirm">
+              <h3>Replace this card?</h3>
+
+              <p>
+                You're about to replace{' '}
+                <strong>{selectedSlot.card.name}</strong> with{' '}
+                <strong>{card.name}</strong> on Page {page.pageNumber}.
+              </p>
+
+              <p>
+                The original card will be removed from this binder pocket,
+                but your collection inventory will not be affected.
+              </p>
+
+              <div className="collection-placement-confirm-actions">
+                <button
+                  type="button"
+                  onClick={() => setIsReplaceConfirmOpen(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectPocket(page.pageNumber, selectedSlot.id)
+                  }}
+                >
+                  Confirm Replacement
+                </button>
+              </div>
+            </div>
+          )}
+
         <div className="collection-placement-footer">
           {selectedSlot ? (
             <>
@@ -267,9 +307,14 @@ function changePage(direction: number) {
 
               <button
                 type="button"
-                onClick={() =>
-                  onSelectPocket(page.pageNumber, selectedSlot.id)
-                }
+                disabled={isReplaceConfirmOpen}
+                onClick={() => {
+                  if (selectedSlot.card) {
+                    setIsReplaceConfirmOpen(true)
+                  } else {
+                    onSelectPocket(page.pageNumber, selectedSlot.id)
+                  }
+                }}
               >
                 {selectedSlot.card
                   ? 'Replace Card'
@@ -281,6 +326,9 @@ function changePage(direction: number) {
           )}
         </div>
       </div>
+
+          
+
     </div>
   )
 }

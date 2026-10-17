@@ -477,6 +477,51 @@ setBinderPages((currentPages) =>
   setSelectedSlotId(null)
 }
 
+function handlePlaceCollectionCardInBinder(
+  pageNumber: number,
+  slotId: string
+) {
+  if (!selectedCardToPlace) return
+
+  const targetPage = binderPages.find(
+    (page) => page.pageNumber === pageNumber
+  )
+
+  const targetSlot = targetPage?.slots.find(
+    (slot) => slot.id === slotId
+  )
+
+if (!targetSlot) return
+
+  const card = selectedCardToPlace
+
+  const binderCard: BinderCard = {
+    id: `${card.cardId}-${card.variant.variantId}`,
+    cardId: card.cardId,
+    name: card.name,
+    image: card.image,
+    localId: card.localId,
+    set: card.set,
+    variant: card.variant,
+  }
+
+  setBinderPages((currentPages) =>
+    currentPages.map((page) =>
+      page.pageNumber === pageNumber
+        ? {
+            ...page,
+            slots: page.slots.map((slot) =>
+              slot.id === slotId
+                ? { ...slot, card: binderCard }
+                : slot
+            ),
+          }
+        : page
+    )
+  )
+
+  setSelectedCardToPlace(null)
+}
 
 useEffect(() => {
   localStorage.setItem(
@@ -1380,9 +1425,7 @@ return (
     card={selectedCardToPlace}
     pages={binderPages}
     onClose={() => setSelectedCardToPlace(null)}
-    onSelectPocket={(pageNumber, slotId) => {
-      console.log('Selected binder pocket:', pageNumber, slotId)
-    }}
+    onSelectPocket={handlePlaceCollectionCardInBinder}
   />
 )}
 

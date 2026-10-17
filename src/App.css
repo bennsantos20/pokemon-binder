@@ -3995,7 +3995,7 @@ button.collection-binder-indicator:focus-visible {
 .collection-placement-modal {
   position: relative;
   width: min(440px, 100%);
-  max-height: min(88vh, 760px);
+  max-height: calc(100dvh - 32px);
   overflow-y: auto;
   padding: 26px;
   background: #201f26;
@@ -4134,10 +4134,18 @@ button.collection-binder-indicator:focus-visible {
 }
 
 .collection-placement-footer {
+  position: sticky;
+  bottom: -26px;
+  z-index: 5;
+
   display: flex;
   flex-direction: column;
   gap: 12px;
+
   margin-top: 18px;
+  padding: 14px 0 20px;
+
+  background: #201f26;
 }
 
 .collection-placement-footer p {
@@ -4474,4 +4482,73 @@ background-size: 16px;
   width: 100%;
   text-align: left;
   white-space: nowrap;
+}
+
+/* Collection → Binder: Replacement Confirmation */
+
+.collection-placement-confirm {
+  margin-top: 18px;
+  padding: 18px;
+  background: rgba(163, 205, 168, 0.07);
+  border: 1px solid rgba(163, 205, 168, 0.28);
+  border-radius: 16px;
+}
+
+.collection-placement-confirm h3 {
+  margin: 0 0 12px;
+  color: #d5ebd6;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.collection-placement-confirm p {
+  margin: 0 0 12px;
+  color: #d1d1d8;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.collection-placement-confirm p:last-of-type {
+  color: #a6a6b1;
+  font-size: 12px;
+}
+
+.collection-placement-confirm-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.collection-placement-confirm-actions button {
+  flex: 1;
+  min-height: 40px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #32313a;
+  color: #f4f3f6;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.collection-placement-confirm-actions button:hover {
+  background: #42414b;
+  transform: translateY(-1px);
+}
+
+.collection-placement-confirm-actions button:last-child {
+  background: #a9cfae;
+  border-color: #a9cfae;
+  color: #213327;
+}
+
+.collection-placement-confirm-actions button:last-child:hover {
+  background: #bfe2c2;
+  transform: translateY(-1px);
+}
+
+.collection-placement-footer button:disabled {
+  display: none;
 }
