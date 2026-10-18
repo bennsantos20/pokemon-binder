@@ -889,7 +889,7 @@ return (
       <p className="eyebrow">POKÉMON TCG BINDER PLANNER</p>
       <h1>Pokémon Binder</h1>
       <p className="subtitle">
-        Property of Noli Santos
+        Property of Noli 
       </p>
       <div className="collection-summary">
         <span>Collection</span>
