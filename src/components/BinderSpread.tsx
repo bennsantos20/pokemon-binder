@@ -44,11 +44,6 @@ function BinderSpread({
   }
 
   const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest('[data-touch-card-dragging="true"]')) {
-      touchStart.current = null
-      return
-    }
-
     if (!touchStart.current || !onSwipe) return
 
     const touch = event.changedTouches[0]

@@ -5,8 +5,6 @@ interface BinderPageProps {
   onSlotClick?: (slotId: string) => void
   onDragStart?: (slotId: string) => void
   onDrop?: (slotId: string) => void
-  onTouchDragStart?: (slotId: string) => void
-  onTouchDragEnd?: (slotId: string) => void
   isPreviewMode?: boolean
   isRearrangeMode?: boolean
   highlightedSlotId: string | null
@@ -20,8 +18,6 @@ function BinderPage({
     onSlotClick,
     onDragStart,
     onDrop,
-    onTouchDragStart,
-    onTouchDragEnd,
     isPreviewMode = false,
     isRearrangeMode = false,
     highlightedSlotId,
@@ -29,7 +25,6 @@ function BinderPage({
     onRenamePage,
     onTouchCardDrop,
 }: BinderPageProps) {
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isTouchDragging = useRef(false)
   const touchSourceSlotId = useRef<string | null>(null)
   const [floatingCard, setFloatingCard] = useState<{
@@ -41,11 +36,6 @@ function BinderPage({
   const touchStartPosition = useRef<{ x: number; y: number } | null>(null)
 
 const cancelLongPress = () => {
-  if (longPressTimer.current !== null) {
-    clearTimeout(longPressTimer.current)
-    longPressTimer.current = null
-  }
-
   touchStartPosition.current = null
 }
 
