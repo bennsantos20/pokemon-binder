@@ -84,17 +84,6 @@ const [visibleMainCollectionCount, setVisibleMainCollectionCount] =
   useState<string | null>(null)
 
   
-  const [currentSpread, setCurrentSpread] = useState<number>(() => {
-  const savedSpread = localStorage.getItem('pokemon-binder-current-spread')
-  const parsedSpread = Number(savedSpread)
-
-  return savedSpread !== null && Number.isInteger(parsedSpread) && parsedSpread >= 0
-    ? parsedSpread
-    : 0
-  })
-
-const [mobilePage, setMobilePage] = useState(1)
-
 const [isMobile, setIsMobile] = useState(
   () => window.matchMedia('(max-width: 800px)').matches
 )
@@ -193,6 +182,30 @@ const [binderPages, setBinderPages] =
       return Array.from({ length: 40 }, (_, index) =>
         createBinderPage(index + 1)
       )
+  })
+
+  const [currentSpread, setCurrentSpread] = useState<number>(() => {
+    const savedSpread = localStorage.getItem('pokemon-binder-current-spread')
+    const parsedSpread = Number(savedSpread)
+
+    return savedSpread !== null && Number.isInteger(parsedSpread) &&
+      parsedSpread >= 0 && parsedSpread <= Math.ceil(binderPages.length / 2)
+      ? parsedSpread
+      : 0
+  })
+
+  const [mobilePage, setMobilePage] = useState<number>(() => {
+    const savedPage = localStorage.getItem('pokemon-binder-current-page')
+    const parsedPage = Number(savedPage)
+
+    if (savedPage !== null && Number.isInteger(parsedPage) &&
+      parsedPage >= 1 && parsedPage <= binderPages.length &&
+      Math.floor(parsedPage / 2) === currentSpread) {
+      return parsedPage
+    }
+
+    // Older saves only identify a spread; open its first binder page.
+    return Math.max(1, Math.min(binderPages.length, currentSpread * 2))
   })
 
   const selectedOccupiedSlot = binderPages
@@ -654,9 +667,13 @@ useEffect(() => {
 useEffect(() => {
   localStorage.setItem(
     'pokemon-binder-current-spread',
-    String(currentSpread)
+    String(isMobile ? Math.floor(mobilePage / 2) : currentSpread)
   )
-}, [currentSpread])
+
+  if (isMobile) {
+    localStorage.setItem('pokemon-binder-current-page', String(mobilePage))
+  }
+}, [currentSpread, mobilePage, isMobile])
 
 useEffect(() => {
   function handleFullscreenChange() {
