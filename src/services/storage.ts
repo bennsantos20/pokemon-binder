@@ -7,6 +7,8 @@ export type SavedData<T> =
   | { status: 'invalid'; key: string; raw: string }
   | { status: 'unavailable'; key: string; raw: null }
 
+export const importJournalKey = 'pokemon-binder-import-journal'
+
 export const storageKeys = {
   collection: 'pokemon-binder-collection',
   binder: 'pokemon-binder-pages',
@@ -96,6 +98,7 @@ export function saveText<T>(saved: SavedData<T>, value: string, storage?: Storag
   if (saved.status === 'invalid' || saved.status === 'unavailable') return 'Saving is blocked because the original saved data could not be loaded safely.'
   try {
     const target = storage ?? window.localStorage
+    if (target.getItem(importJournalKey) !== null) return 'Saving is paused while an import is being recovered. Close other binder tabs and finish recovery.'
     const current = target.getItem(saved.key)
     if (current !== saved.raw) return 'Saved data changed in another tab or outside this session. Saving is paused; reload after backing up your changes.'
     target.setItem(saved.key, value)

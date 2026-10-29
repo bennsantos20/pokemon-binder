@@ -19,8 +19,15 @@ import BinderCardActions from './components/BinderCardActions'
 import CollectionCardActions from './components/CollectionCardActions'
 import { BookOpen, ChevronDown, Check, Pencil, X, Eye, ArrowLeft, Maximize2, Trash2, Info} from 'lucide-react'
 import CollectionBinderPlacement from './components/CollectionBinderPlacement'
+import BackupControls from './components/BackupControls'
+import type { BackupPreferences } from './services/backup'
 
-function App() {
+function App({ importedPreferences, backupMessage = '', onBackupImported }: {
+  importedPreferences?: BackupPreferences
+  backupMessage?: string
+  onBackupImported?: (preferences: BackupPreferences) => void
+} = {}) {
+  const [backupBusy, setBackupBusy] = useState(false)
   const [savedData] = useState(() => ({
     collection: loadJson(storageKeys.collection, isCollection),
     binder: loadBinder(),
@@ -41,18 +48,18 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [cards, setCards] = useState<PokemonCard[]>([])
   const [mainSearchView, setMainSearchView] =
-    useState<'grid' | 'list'>('grid')
+    useState<'grid' | 'list'>(importedPreferences?.searchView ?? 'grid')
   
   const [isCollectionExpanded, setIsCollectionExpanded] =
     useState<boolean>(() => {
       const savedPreference = savedData.expanded.status === 'valid' ? savedData.expanded.value : null
 
-      return savedPreference === 'true'
+      return importedPreferences?.collectionExpanded ?? (savedPreference === 'true')
     })
 
   const [mainCollectionSearch, setMainCollectionSearch] = useState('')
   const [mainCollectionDisplay, setMainCollectionDisplay] =
-    useState<'grid' | 'list'>('grid')
+    useState<'grid' | 'list'>(importedPreferences?.collectionView ?? 'grid')
   const [selectedManageCard, setSelectedManageCard] =
     useState<OwnedCard | null>(null)
   const [selectedCardToPlace, setSelectedCardToPlace] =
@@ -143,6 +150,7 @@ const [binderPages, setBinderPages] = useState<BinderPageType[]>(() =>
 )
 
   const [currentSpread, setCurrentSpread] = useState<number>(() => {
+    if (importedPreferences) return importedPreferences.currentSpread
     const savedSpread = savedData.spread.status === 'valid' ? savedData.spread.value : null
     const parsedSpread = Number(savedSpread)
 
@@ -153,6 +161,7 @@ const [binderPages, setBinderPages] = useState<BinderPageType[]>(() =>
   })
 
   const [mobilePage, setMobilePage] = useState<number>(() => {
+    if (importedPreferences) return importedPreferences.mobilePage
     const savedPage = savedData.page.status === 'valid' ? savedData.page.value : null
     const parsedPage = Number(savedPage)
 
@@ -514,16 +523,18 @@ if (!targetSlot) return
 }
 
 useEffect(() => {
+  if (backupBusy) return
   if (savedData.collection.status === 'invalid' || savedData.collection.status === 'unavailable') return
   // oxlint-disable-next-line react/set-state-in-effect -- Report the result of an external storage write.
   recordSaveError(storageKeys.collection, saveJson(savedData.collection, collection))
-}, [collection, savedData])
+}, [collection, savedData, backupBusy])
 
 
 useEffect(() => {
+  if (backupBusy) return
   // oxlint-disable-next-line react/set-state-in-effect -- Report the result of an external storage write.
   recordSaveError(storageKeys.expanded, saveText(savedData.expanded, String(isCollectionExpanded)))
-}, [isCollectionExpanded, savedData])
+}, [isCollectionExpanded, savedData, backupBusy])
 
 useEffect(() => {
   if (!isPageNavigatorOpen) return
@@ -577,10 +588,11 @@ useEffect(() => {
 
 
 useEffect(() => {
+  if (backupBusy) return
   if (savedData.binder.status === 'invalid' || savedData.binder.status === 'unavailable') return
   // oxlint-disable-next-line react/set-state-in-effect -- Report the result of an external storage write.
   recordSaveError(storageKeys.binder, saveJson(savedData.binder, binderPages))
-}, [binderPages, savedData])
+}, [binderPages, savedData, backupBusy])
 
 
 useEffect(() => {
@@ -608,6 +620,7 @@ useEffect(() => {
 
 
 useEffect(() => {
+  if (backupBusy) return
   // oxlint-disable-next-line react/set-state-in-effect -- Report the result of an external storage write.
   recordSaveError(storageKeys.spread, saveText(savedData.spread,
     String(isMobile ? Math.floor(mobilePage / 2) : currentSpread)))
@@ -616,7 +629,7 @@ useEffect(() => {
     // oxlint-disable-next-line react/set-state-in-effect -- Report the result of an external storage write.
     recordSaveError(storageKeys.page, saveText(savedData.page, String(mobilePage)))
   }
-}, [currentSpread, mobilePage, isMobile, savedData])
+}, [currentSpread, mobilePage, isMobile, savedData, backupBusy])
 
 useEffect(() => {
   function handleFullscreenChange() {
@@ -863,6 +876,19 @@ return (
         <strong>{collection.length}</strong>
       </div>
     </header>
+    {!isPreviewMode && backupMessage && <p role="status">{backupMessage}</p>}
+    {!isPreviewMode && <BackupControls collection={collection} pages={binderPages}
+      complete={Object.values(savedData).every(saved => saved.status !== 'invalid' && saved.status !== 'unavailable')}
+      preferences={{
+        collectionExpanded: isCollectionExpanded,
+        currentSpread: isMobile ? Math.floor(mobilePage / 2) : currentSpread,
+        mobilePage: isMobile || Math.floor(mobilePage / 2) === currentSpread
+          ? mobilePage : Math.max(1, Math.min(binderPages.length, currentSpread * 2)),
+        collectionView: mainCollectionDisplay, searchView: mainSearchView,
+      }}
+      onPause={setBackupBusy} onImported={preferences => onBackupImported?.(preferences)} />}
+    <div className="backup-editable" inert={backupBusy}>
+
 
 
 
@@ -1774,6 +1800,7 @@ return (
 )}
 
 
+    </div>
   </main>
 )
 }
