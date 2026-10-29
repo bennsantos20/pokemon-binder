@@ -31,6 +31,7 @@ function mountApp(initial: Record<string, string>, unavailable = false, writeFai
       exports, window, document: { addEventListener() {}, removeEventListener() {} },
       require(name: string) {
         if (name === './services/storage') return execute('src/services/storage.ts')
+        if (name === './services/latestRequest') return execute('src/services/latestRequest.ts')
         if (name === 'react') return {
           useState(initial: unknown) {
             let value = typeof initial === 'function' ? initial() : initial

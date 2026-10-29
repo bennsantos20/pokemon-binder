@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { searchCards, getCardById } from './services/tcgdex'
+import { createLatestRequest, isAbortError } from './services/latestRequest'
 import { completeBinder, isCollection, loadBinder, loadJson, readText, saveJson, saveText, storageKeys } from './services/storage'
 import type { 
   BinderCard,
@@ -47,6 +48,17 @@ function App({ importedPreferences, backupMessage = '', onBackupImported }: {
   ]
   const [searchTerm, setSearchTerm] = useState('')
   const [cards, setCards] = useState<PokemonCard[]>([])
+  const [searchRequests] = useState(createLatestRequest)
+  const [detailRequests] = useState(createLatestRequest)
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
+  const [completedSearch, setCompletedSearch] = useState<string | null>(null)
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false)
+  const [detailError, setDetailError] = useState<string | null>(null)
+  useEffect(() => () => {
+    searchRequests.cancel()
+    detailRequests.cancel()
+  }, [searchRequests, detailRequests])
   const [mainSearchView, setMainSearchView] =
     useState<'grid' | 'list'>(importedPreferences?.searchView ?? 'grid')
   
@@ -649,26 +661,65 @@ useEffect(() => {
   }
 }, [])
 
+function dismissCardDetails() {
+  detailRequests.cancel()
+  setIsLoadingDetails(false)
+  setDetailError(null)
+  setSelectedCard(null)
+}
+
 async function handleSearch() {
   const trimmedSearch = searchTerm.trim()
-
   if (!trimmedSearch) {
-    setCards([])
+    handleClearSearch()
     return
   }
-
-  const results = await searchCards(trimmedSearch)
-  setCards(results)
+  const request = searchRequests.start()
+  dismissCardDetails()
+  setIsSearching(true)
+  setSearchError(null)
+  setCompletedSearch(null)
+  setCards([])
+  try {
+    const results = await searchCards(trimmedSearch, request.signal)
+    if (request.isCurrent()) {
+      setCards(results)
+      setCompletedSearch(trimmedSearch)
+    }
+  } catch (error) {
+    if (request.isCurrent() && !isAbortError(error)) {
+      setSearchError('Unable to search Pokémon cards. Check your connection and try Search again.')
+    }
+  } finally {
+    if (request.isCurrent()) setIsSearching(false)
+  }
 }
 
 function handleClearSearch() {
+  searchRequests.cancel()
+  dismissCardDetails()
   setSearchTerm('')
   setCards([])
+  setIsSearching(false)
+  setSearchError(null)
+  setCompletedSearch(null)
 }
 
 async function handleAddCard(card: PokemonCard) {
-  const details = await getCardById(card.id)
-  setSelectedCard(details)
+  const request = detailRequests.start()
+  setSelectedCard(null)
+  setDetailError(null)
+  setIsLoadingDetails(true)
+  try {
+    const details = await getCardById(card.id, request.signal)
+    if (request.isCurrent()) setSelectedCard(details)
+  } catch (error) {
+    if (request.isCurrent() && !isAbortError(error)) {
+      setDetailError('Unable to load card details. Check your connection and select the card again.')
+    }
+  } finally {
+    if (request.isCurrent()) setIsLoadingDetails(false)
+  }
 }
 
 function handleAddToCollection(
@@ -716,7 +767,7 @@ function handleAddToCollection(
     return [...currentCollection, ownedCard]
   })
 
-  setSelectedCard(null)
+  dismissCardDetails()
 }
 
 
@@ -1219,6 +1270,7 @@ return (
       
     <form
       className="search-bar"
+      aria-busy={isSearching}
       onSubmit={(event) => {
         event.preventDefault()
         handleSearch()
@@ -1227,11 +1279,12 @@ return (
     <input
       type="text"
       placeholder="Search Pokémon cards..."
+      aria-label="Search Pokémon cards"
       value={searchTerm}
       onChange={(event) => setSearchTerm(event.target.value)}
     />
 
-  {(searchTerm || cards.length > 0) && (
+  {(searchTerm || cards.length > 0 || isSearching || isLoadingDetails || searchError || detailError || completedSearch !== null) && (
     <button
       type="button"
       className="search-clear-button"
@@ -1245,9 +1298,16 @@ return (
     type="submit"
     disabled={!searchTerm.trim()}
   >
-    Search
+    {isSearching ? 'Searching…' : 'Search'}
   </button>
 </form>
+    {isSearching && <p role="status">Searching Pokémon cards…</p>}
+    {searchError && <p role="alert">{searchError}</p>}
+    {!isSearching && !searchError && completedSearch !== null && cards.length === 0 && (
+      <p role="status">No cards found for “{completedSearch}”. Try another Pokémon name.</p>
+    )}
+    {isLoadingDetails && <p role="status">Loading card details… <button type="button" onClick={dismissCardDetails}>Cancel</button></p>}
+    {detailError && <p role="alert">{detailError}</p>}
 
 
       
@@ -1541,8 +1601,9 @@ return (
 
     {selectedCard && (
       <CardDetailsModal
+        key={selectedCard.id}
         card={selectedCard}
-        onClose={() => setSelectedCard(null)}
+        onClose={dismissCardDetails}
         onAdd={handleAddToCollection}
       />
 )}
