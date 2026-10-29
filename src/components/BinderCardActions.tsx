@@ -6,6 +6,8 @@ interface BinderCardActionsProps {
   card: BinderCard
   isOwned: boolean
   onClose: () => void
+  detailsLoading?: boolean
+  detailsError?: string | null
   onViewDetails: () => void
   onReplace: () => void
   onAddToCollection: () => void
@@ -17,6 +19,8 @@ function BinderCardActions({
   isOwned,
   onClose,
   onViewDetails,
+  detailsLoading = false,
+  detailsError,
   onReplace,
   onAddToCollection,
   onRemove,
@@ -65,8 +69,10 @@ function BinderCardActions({
       </div>
 
         
+        {detailsLoading && <p role="status">Loading card details… Close this menu to cancel.</p>}
+        {detailsError && <p role="alert">{detailsError}</p>}
     <div className="binder-actions-list">
-      <button type="button" onClick={onViewDetails}>
+      <button type="button" onClick={onViewDetails} aria-busy={detailsLoading}>
         <Eye size={18} strokeWidth={1.8} />
         <span>View Card Details</span>
       </button>

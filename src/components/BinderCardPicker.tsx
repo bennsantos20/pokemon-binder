@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
+import { createLatestRequest, isAbortError } from '../services/latestRequest'
 import { 
     getCardById,
     searchCards,
@@ -54,33 +55,68 @@ function BinderCardPicker({
     const [selectedVariant, setSelectedVariant] =
         useState<CardVariant | null>(null)
 
-    async function handleSearch() {
-  if (!searchTerm.trim()) {
-    return
+  const [searchRequests] = useState(createLatestRequest)
+  const [detailRequests] = useState(createLatestRequest)
+  const [searchError, setSearchError] = useState<string | null>(null)
+  const [detailError, setDetailError] = useState<string | null>(null)
+  const [completedSearch, setCompletedSearch] = useState<string | null>(null)
+
+  function cancelRequests() {
+    searchRequests.cancel(); detailRequests.cancel()
+    setIsSearching(false); setIsLoadingCard(false)
+    setSearchError(null); setDetailError(null)
+  }
+  function closePicker() { cancelRequests(); onClose() }
+  const escapeClose = useEffectEvent(closePicker)
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') escapeClose() }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      searchRequests.cancel(); detailRequests.cancel()
+    }
+  }, [searchRequests, detailRequests])
+
+  function backToOptions() {
+    cancelRequests()
+    setSelectedCard(null); setSelectedVariant(null)
+    setView('options')
+  }
+  async function handleSearch() {
+    const query = searchTerm.trim()
+    if (!query) return
+    const request = searchRequests.start()
+    detailRequests.cancel()
+    setIsSearching(true); setIsLoadingCard(false)
+    setSearchError(null); setDetailError(null)
+    setSelectedCard(null); setSelectedVariant(null)
+    setSearchResults([]); setCompletedSearch(null)
+    try {
+      const results = await searchCards(query, request.signal)
+      if (request.isCurrent()) { setSearchResults(results); setCompletedSearch(query) }
+    } catch (error) {
+      if (request.isCurrent() && !isAbortError(error)) {
+        setSearchError('Unable to search Pokémon cards. Check your connection and try Search again.')
+      }
+    } finally { if (request.isCurrent()) setIsSearching(false) }
   }
 
-  setIsSearching(true)
-
-  try {
-    const results = await searchCards(searchTerm)
-    setSearchResults(results)
-  } finally {
-    setIsSearching(false)
+  async function handleCardSelect(card: PokemonCard) {
+    const request = detailRequests.start()
+    setIsLoadingCard(true); setDetailError(null)
+    setSelectedCard(null); setSelectedVariant(null)
+    try {
+      const details = await getCardById(card.id, request.signal)
+      if (request.isCurrent()) {
+        setSelectedCard(details)
+        setSelectedVariant(details.variants_detailed?.[0] ?? null)
+      }
+    } catch (error) {
+      if (request.isCurrent() && !isAbortError(error)) {
+        setDetailError('Unable to load card details. Check your connection and select the card again to retry.')
+      }
+    } finally { if (request.isCurrent()) setIsLoadingCard(false) }
   }
-}
-
-async function handleCardSelect(card: PokemonCard) {
-  setIsLoadingCard(true)
-
-  try {
-    const details = await getCardById(card.id)
-
-    setSelectedCard(details)
-    setSelectedVariant(details.variants_detailed?.[0] ?? null)
-  } finally {
-    setIsLoadingCard(false)
-  }
-}
 
 const collectionSets = Array.from(
   new Set(collection.map((card) => card.set.name))
@@ -150,10 +186,13 @@ function handlePlaceCollectionCard() {
   return (
     <div
       className="binder-picker-backdrop"
-      onClick={onClose}
+      onClick={closePicker}
     >
       <section
         className="binder-card-picker"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add a card to binder"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="binder-picker-header">
@@ -165,7 +204,7 @@ function handlePlaceCollectionCard() {
           <button
             className="binder-picker-close"
             type="button"
-            onClick={onClose} 
+            onClick={closePicker}
             aria-label="Close card picker"
           >
             ×
@@ -218,6 +257,7 @@ function handlePlaceCollectionCard() {
         type="button"
         className="binder-picker-back"
         onClick={() => {
+          cancelRequests()
           setSelectedCard(null)
           setSelectedVariant(null)
         }}
@@ -287,7 +327,7 @@ function handlePlaceCollectionCard() {
    <button
       type="button"
       className="binder-picker-back"
-      onClick={() => setView('options')}
+      onClick={backToOptions}
     >
       <ArrowLeft size={17} strokeWidth={2} />
       <span>Back</span>
@@ -297,6 +337,7 @@ function handlePlaceCollectionCard() {
 
 <form
   className="binder-card-search"
+  aria-busy={isSearching}
   onSubmit={(event) => {
     event.preventDefault()
     handleSearch()
@@ -307,16 +348,25 @@ function handlePlaceCollectionCard() {
     value={searchTerm}
     onChange={(event) => setSearchTerm(event.target.value)}
     placeholder="Search Pokémon cards..."
+    aria-label="Search all Pokémon cards"
     autoFocus
   />
 
   <button
     type="submit"
-    disabled={isSearching}
+    disabled={!searchTerm.trim()}
   >
     {isSearching ? 'Searching...' : 'Search'}
   </button>
 </form>
+
+{isSearching && <p role="status">Searching Pokémon cards…</p>}
+{searchError && <p role="alert">{searchError}</p>}
+{!isSearching && !searchError && completedSearch !== null && searchResults.length === 0 && (
+  <p role="status">No cards found for “{completedSearch}”. Try another Pokémon name.</p>
+)}
+{isLoadingCard && <p role="status">Loading card details… <button type="button" onClick={cancelRequests}>Cancel</button></p>}
+{detailError && <p role="alert">{detailError}</p>}
 
 {searchResults.length > 0 && (
   <p className="binder-search-count">
@@ -356,7 +406,7 @@ function handlePlaceCollectionCard() {
         type="button"
         key={card.id}
         onClick={() => handleCardSelect(card)}
-        disabled={isLoadingCard}
+        aria-busy={isLoadingCard}
       >
         {card.image ? (
           <img
@@ -385,7 +435,7 @@ function handlePlaceCollectionCard() {
    <button
     type="button"
     className="binder-picker-back"
-    onClick={() => setView('options')}
+    onClick={backToOptions}
   >
     <ArrowLeft size={17} strokeWidth={2} />
     <span>Back</span>

@@ -55,6 +55,7 @@ function App({ importedPreferences, backupMessage = '', onBackupImported }: {
   const [completedSearch, setCompletedSearch] = useState<string | null>(null)
   const [isLoadingDetails, setIsLoadingDetails] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
+  const [detailSource, setDetailSource] = useState<'homepage' | 'binder' | 'collection'>('homepage')
   useEffect(() => () => {
     searchRequests.cancel()
     detailRequests.cancel()
@@ -338,6 +339,7 @@ function handleBinderSlotClick(slotId: string) {
     .find((slot) => slot.id === slotId)
 
   if (!slot) return
+  dismissCardDetails()
 
   if (slot.card) {
     setSelectedSlotId(null)
@@ -349,6 +351,7 @@ function handleBinderSlotClick(slotId: string) {
 }
 
 function handleRemoveCardFromBinder() {
+  dismissCardDetails()
   if (!selectedOccupiedSlotId) return
 
   setBinderPages((currentPages) =>
@@ -367,30 +370,11 @@ function handleRemoveCardFromBinder() {
 
 async function handleViewBinderCardDetails() {
   const cardId = selectedOccupiedSlot?.card?.cardId
-
-  if (!cardId) return
-
-  try {
-    const cardDetails = await getCardById(cardId)
-
-    setSelectedCard(cardDetails)
-    setSelectedOccupiedSlotId(null)
-  } catch (error) {
-    console.error('Failed to load binder card details:', error)
-  }
+  if (cardId) await loadCardDetails(cardId, 'binder', () => setSelectedOccupiedSlotId(null))
 }
 
 async function handleViewCollectionCardDetails() {
-  if (!selectedManageCard) return
-
-  try {
-    const details = await getCardById(selectedManageCard.cardId)
-
-    setSelectedCard(details)
-    setSelectedManageCard(null)
-  } catch (error) {
-    console.error('Failed to load collection card details:', error)
-  }
+  if (selectedManageCard) await loadCardDetails(selectedManageCard.cardId, 'collection', () => setSelectedManageCard(null))
 }
 
 async function handleToggleFullscreen() {
@@ -706,16 +690,24 @@ function handleClearSearch() {
 }
 
 async function handleAddCard(card: PokemonCard) {
+  await loadCardDetails(card.id, 'homepage')
+}
+
+async function loadCardDetails(cardId: string, source: 'homepage' | 'binder' | 'collection', onLoaded?: () => void) {
   const request = detailRequests.start()
+  setDetailSource(source)
   setSelectedCard(null)
   setDetailError(null)
   setIsLoadingDetails(true)
   try {
-    const details = await getCardById(card.id, request.signal)
-    if (request.isCurrent()) setSelectedCard(details)
+    const details = await getCardById(cardId, request.signal)
+    if (request.isCurrent()) {
+      setSelectedCard(details)
+      onLoaded?.()
+    }
   } catch (error) {
     if (request.isCurrent() && !isAbortError(error)) {
-      setDetailError('Unable to load card details. Check your connection and select the card again.')
+      setDetailError('Unable to load card details. Check your connection and select View Card Details or the card again to retry.')
     }
   } finally {
     if (request.isCurrent()) setIsLoadingDetails(false)
@@ -772,6 +764,7 @@ function handleAddToCollection(
 
 
 function handleAddBinderCardToCollection() {
+  dismissCardDetails()
   if (!selectedOccupiedSlot?.card) return
 
   const card = selectedOccupiedSlot.card
@@ -812,6 +805,7 @@ function handleAddBinderCardToCollection() {
 
 
 function handleUpdateCollectionQuantity(quantity: number) {
+  dismissCardDetails()
   if (!selectedManageCard) return
   if (!Number.isSafeInteger(quantity) || quantity < 1) return
 
@@ -829,6 +823,7 @@ function handleUpdateCollectionQuantity(quantity: number) {
 
 
 function handleRemoveFromCollection() {
+  dismissCardDetails()
   if (!selectedManageCard) return
 
   setIsRemoveCollectionConfirmOpen(true)
@@ -1306,8 +1301,8 @@ return (
     {!isSearching && !searchError && completedSearch !== null && cards.length === 0 && (
       <p role="status">No cards found for “{completedSearch}”. Try another Pokémon name.</p>
     )}
-    {isLoadingDetails && <p role="status">Loading card details… <button type="button" onClick={dismissCardDetails}>Cancel</button></p>}
-    {detailError && <p role="alert">{detailError}</p>}
+    {detailSource === 'homepage' && isLoadingDetails && <p role="status">Loading card details… <button type="button" onClick={dismissCardDetails}>Cancel</button></p>}
+    {detailSource === 'homepage' && detailError && <p role="alert">{detailError}</p>}
 
 
       
@@ -1531,7 +1526,7 @@ return (
               key={card.id}
               card={card}
               displayMode={mainCollectionDisplay}
-              onManage={setSelectedManageCard}
+              onManage={card => { dismissCardDetails(); setSelectedManageCard(card) }}
               binderPlacements={getBinderPlacements(card)}
               onBinderClick={handleBinderIndicatorClick}
             />
@@ -1575,6 +1570,7 @@ return (
 
     {selectedSlotId && (
       <BinderCardPicker
+        key={selectedSlotId}
         slotId={selectedSlotId}
         collection={collection}
         onClose={() => setSelectedSlotId(null)}
@@ -1588,9 +1584,12 @@ return (
         isOwned={ownedCardIds.has(
           `${selectedOccupiedSlot.card.cardId}-${selectedOccupiedSlot.card.variant.variantId}`
         )}
-        onClose={() => setSelectedOccupiedSlotId(null)}
+        onClose={() => { dismissCardDetails(); setSelectedOccupiedSlotId(null) }}
         onViewDetails={handleViewBinderCardDetails}
+        detailsLoading={detailSource === 'binder' && isLoadingDetails}
+        detailsError={detailSource === 'binder' ? detailError : null}
         onReplace={() => {
+          dismissCardDetails()
           setSelectedSlotId(selectedOccupiedSlotId)
           setSelectedOccupiedSlotId(null)
         }}
@@ -1611,10 +1610,14 @@ return (
 {selectedManageCard && (
 <CollectionCardActions
   card={selectedManageCard}
-  onClose={() => setSelectedManageCard(null)}
+  onClose={() => { dismissCardDetails(); setSelectedManageCard(null) }}
   onViewDetails={handleViewCollectionCardDetails}
+  detailsLoading={detailSource === 'collection' && isLoadingDetails}
+  detailsError={detailSource === 'collection' ? detailError : null}
+  onCancelDetails={dismissCardDetails}
   onManageQuantity={handleUpdateCollectionQuantity}
   onAddToBinder={() => {
+    dismissCardDetails()
     setSelectedCardToPlace(selectedManageCard)
     setSelectedManageCard(null)
   }}

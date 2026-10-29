@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 import { transpileModule, ModuleKind, JsxEmit } from 'typescript'
+import { createBinderPage, storageKeys } from '../src/services/storage.ts'
 
 function deferred() {
   let resolve!: (value: unknown) => void
@@ -15,14 +16,14 @@ const details = (id: string) => ({ ...card(id), set: { id: 'set', name: 'Set' },
   { variantId: `${id}-normal`, type: 'normal', size: 'normal' },
   { variantId: `${id}-holo`, type: 'holo', size: 'normal' },
 ] })
-function appHarness() {
+function appHarness(initial: Record<string, string> = {}) {
   const states: unknown[] = [], effects: Array<() => unknown> = []
   let cursor = 0, first = true, tree: any
   const calls: Array<{ kind: string; query: string; signal: AbortSignal } & ReturnType<typeof deferred>> = []
   const request = (kind: string) => (query: string, signal: AbortSignal) => {
     const call = { kind, query, signal, ...deferred() }; calls.push(call); return call.promise
   }
-  const storage = new Map<string, string>()
+  const storage = new Map<string, string>(Object.entries(initial))
   const window = { localStorage: { getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value) },
     matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }) }
   const execute = (file: string) => {
@@ -149,4 +150,64 @@ test('Grid/List survives searches and unmount invalidates both request channels'
   for (const request of app.calls) assert.equal(request.signal.aborted, true)
   app.calls[1].resolve(details('a')); app.calls[2].resolve([card('late')]); await settle(); app.render()
   assert.deepEqual(app.results(), []); assert.ok(app.find(n => n.props?.className === 'card-grid main-search-list-view'))
+})
+
+const owned = (id: string) => ({ ...card(id), cardId: id, set: { id: 'set', name: 'Set' },
+  variant: { variantId: 'normal', type: 'normal', size: 'normal' }, quantity: 2 })
+function sourceApp() {
+  const page = createBinderPage(1)
+  page.slots[0].card = owned('binder')
+  return appHarness({
+    [storageKeys.binder]: JSON.stringify([page]),
+    [storageKeys.collection]: JSON.stringify([owned('collection')]),
+    [storageKeys.expanded]: 'true',
+  })
+}
+function openSource(app: ReturnType<typeof appHarness>, source: 'binder' | 'collection') {
+  if (source === 'binder') app.find(n => n.type === './components/BinderSpread').props.onSlotClick('page-1-slot-1')
+  else app.find(n => n.type === './components/CollectionCard').props.onManage(owned('collection'))
+  app.render()
+  return app.find(n => n.type === (source === 'binder' ? './components/BinderCardActions' : './components/CollectionCardActions'))
+}
+
+test('dismissing binder or collection View Details prevents a late response from reopening the modal', async () => {
+  for (const source of ['binder', 'collection'] as const) {
+    const app = sourceApp(); let menu = openSource(app, source)
+    menu.props.onViewDetails(); app.render()
+    menu = app.find(n => n.type === menu.type)
+    assert.equal(menu.props.detailsLoading, true)
+    menu.props.onClose(); app.calls[0].resolve(details(source)); await settle(); app.render()
+    assert.equal(app.calls[0].signal.aborted, true)
+    assert.equal(app.find(n => n.type === './components/CardDetailsModal'), undefined)
+  }
+})
+
+test('rapid binder and collection selections share the latest detail request', async () => {
+  const app = sourceApp()
+  openSource(app, 'binder').props.onViewDetails()
+  openSource(app, 'collection').props.onViewDetails()
+  assert.equal(app.calls[0].signal.aborted, true)
+  app.calls[1].resolve(details('collection')); app.calls[0].resolve(details('binder'))
+  await settle(); app.render()
+  assert.equal(app.find(n => n.type === './components/CardDetailsModal').props.card.id, 'collection')
+})
+
+test('binder and collection detail failures appear in their menu and allow retry', async () => {
+  for (const source of ['binder', 'collection'] as const) {
+    const app = sourceApp(); let menu = openSource(app, source)
+    menu.props.onViewDetails(); app.calls[0].reject(Error('offline')); await settle(); app.render()
+    menu = app.find(n => n.type === menu.type)
+    assert.match(menu.props.detailsError, /Unable to load/)
+    assert.equal(menu.props.detailsLoading, false)
+    menu.props.onViewDetails(); app.calls[1].resolve(details(source)); await settle(); app.render()
+    assert.equal(app.find(n => n.type === './components/CardDetailsModal').props.card.id, source)
+  }
+})
+
+test('choosing a different binder/collection action invalidates pending details', async () => {
+  const app = sourceApp(); const menu = openSource(app, 'binder')
+  menu.props.onViewDetails(); menu.props.onReplace()
+  app.calls[0].resolve(details('binder')); await settle(); app.render()
+  assert.equal(app.find(n => n.type === './components/CardDetailsModal'), undefined)
+  assert.ok(app.find(n => n.type === './components/BinderCardPicker'))
 })

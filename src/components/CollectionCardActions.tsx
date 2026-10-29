@@ -15,6 +15,9 @@ import {
 interface CollectionCardActionsProps {
   card: OwnedCard
   onClose: () => void
+  detailsLoading?: boolean
+  detailsError?: string | null
+  onCancelDetails?: () => void
   onViewDetails: () => void
   onManageQuantity: (quantity: number) => void
   onAddToBinder: () => void
@@ -25,6 +28,9 @@ function CollectionCardActions({
   card,
   onClose,
   onViewDetails,
+  detailsLoading = false,
+  detailsError,
+  onCancelDetails,
   onManageQuantity,
   onAddToBinder,
   onRemove,
@@ -70,8 +76,10 @@ function CollectionCardActions({
           </div>
         </div>
 
+        {detailsLoading && <p role="status">Loading card details… Close this menu to cancel.</p>}
+        {detailsError && <p role="alert">{detailsError}</p>}
         <div className="collection-actions-list">
-          <button type="button" onClick={onViewDetails}>
+          <button type="button" onClick={onViewDetails} aria-busy={detailsLoading}>
             <Eye size={18} strokeWidth={1.8} />
             <span>View Card Details</span>
           </button>
@@ -130,7 +138,7 @@ function CollectionCardActions({
 ) : (
     <button
       type="button"
-      onClick={() => setIsEditingQuantity(true)}
+      onClick={() => { onCancelDetails?.(); setIsEditingQuantity(true) }}
       >
         <SlidersHorizontal size={18} strokeWidth={1.8} />
         <span>Manage Quantity</span>
