@@ -5,6 +5,7 @@
 }
 
 .app-header {
+  position: relative;
   text-align: center;
   margin-bottom: 40px;
 }
@@ -4700,8 +4701,17 @@ background-size: 16px;
 }
 /* Backup controls and native modal confirmation */
 .backup-editable { display: contents; }
-.backup-controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 24px; }
-.backup-controls > p { flex-basis: 100%; margin: 0; }
+.backup-controls { position: absolute; top: -44px; right: 0; z-index: 50; text-align: left; }
+.backup-controls .settings-trigger { padding: 4px 10px; line-height: 20px; }
+.settings-actions, .backup-controls > p {
+  position: absolute; right: 0; top: calc(100% + 8px); width: min(280px, calc(100vw - 24px));
+  box-sizing: border-box; padding: 10px; margin: 0; background: #1d3025; color: #f2f8f3;
+  border: 1px solid #547660; border-radius: 10px; box-shadow: 0 8px 24px #0006;
+}
+.settings-actions { display: flex; flex-direction: column; gap: 8px; }
+.settings-actions button { text-align: left; }
+.settings-actions p { margin: 4px; font-size: 0.85rem; }
+@media (max-width: 600px) { .backup-controls { top: -34px; } }
 .backup-controls button, .backup-recovery button {
   background: #244d39; color: #f2f8f3; border: 1px solid #83b595;
   border-radius: 8px; padding: 10px 14px; cursor: pointer;

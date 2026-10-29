@@ -13,6 +13,9 @@ interface Props {
   onImported: (preferences: BackupPreferences) => void
 }
 export default function BackupControls({ collection, pages, preferences, complete, onPause, onImported }: Props) {
+  const settings = useRef<HTMLElement>(null)
+  const actions = useRef<HTMLDivElement>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const input = useRef<HTMLInputElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
@@ -24,6 +27,27 @@ export default function BackupControls({ collection, pages, preferences, complet
   useEffect(() => {
     if (preview) dialog.current?.showModal()
   }, [preview])
+  useEffect(() => {
+    if (!settingsOpen) return
+    actions.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
+    const onPointerDown = (event: PointerEvent) => {
+      if (!settings.current?.contains(event.target as Node)) setSettingsOpen(false)
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setSettingsOpen(false)
+        trigger.current?.focus()
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [settingsOpen])
+  function closeSettings() { setSettingsOpen(false); trigger.current?.focus() }
   function downloadCurrent() {
     try {
       if (!complete) throw Error('Some saved data could not be loaded. Download raw recovery data instead; temporary defaults are not a complete backup.')
@@ -64,15 +88,29 @@ export default function BackupControls({ collection, pages, preferences, complet
   const current = backupCounts(collection, pages)
   const incoming = preview ? backupCounts(preview.backup.collection, completeBinder(preview.backup.binderPages)) : []
   return (
-    <section className="backup-controls" aria-label="Backup and restore">
-      <button type="button" onClick={downloadCurrent} disabled={!complete || busy}>Export Backup</button>
-      <button type="button" ref={trigger} onClick={() => input.current?.click()} disabled={busy}>Import Backup</button>
-      {!complete && <button type="button" onClick={downloadRaw}>Download Raw Recovery Data</button>}
+    <section ref={settings} className="backup-controls" aria-label="Settings" onBlur={event => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setSettingsOpen(false)
+    }}>
+      <button type="button" ref={trigger} className="settings-trigger" aria-expanded={settingsOpen}
+        aria-controls="backup-settings-actions" disabled={busy}
+        onClick={() => setSettingsOpen(open => !open)}
+        onKeyDown={event => {
+          if (event.key === 'ArrowDown') {
+            event.preventDefault(); setSettingsOpen(true)
+            actions.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
+          }
+        }}>Settings <span aria-hidden="true">▾</span></button>
+      {settingsOpen && <div ref={actions} id="backup-settings-actions" className="settings-actions" aria-label="Backup actions">
+        <button type="button" onClick={() => { closeSettings(); downloadCurrent() }} disabled={!complete || busy}>Export Backup</button>
+        <button type="button" onClick={() => { closeSettings(); input.current?.click() }} disabled={busy}>Import Backup</button>
+        {!complete && <button type="button" onClick={() => { closeSettings(); downloadRaw() }}>Download Raw Recovery Data</button>}
+        {!complete && <p>Some saved data is unavailable. Export is disabled to avoid backing up temporary defaults.</p>}
+        {!preview && message && <p role="status">{message}</p>}
+      </div>}
       <input ref={input} type="file" accept=".json,application/json" hidden onChange={event => {
         const file = event.target.files?.[0]; if (file) void select(file)
       }} />
-      {!preview && message && <p role="status">{message}</p>}
-      {!complete && <p>Some saved data is unavailable. Export is disabled to avoid backing up temporary defaults.</p>}
+      {!settingsOpen && !preview && message && <p role="status">{message}</p>}
       <dialog ref={dialog} className="backup-dialog" aria-labelledby="backup-title" onCancel={event => { event.preventDefault(); close() }}>
         <h2 id="backup-title">Replace your binder and collection?</h2>
         {preview && <>

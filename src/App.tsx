@@ -921,8 +921,6 @@ return (
         <span>Collection</span>
         <strong>{collection.length}</strong>
       </div>
-    </header>
-    {!isPreviewMode && backupMessage && <p role="status">{backupMessage}</p>}
     {!isPreviewMode && <BackupControls collection={collection} pages={binderPages}
       complete={Object.values(savedData).every(saved => saved.status !== 'invalid' && saved.status !== 'unavailable')}
       preferences={{
@@ -933,6 +931,9 @@ return (
         collectionView: mainCollectionDisplay, searchView: mainSearchView,
       }}
       onPause={setBackupBusy} onImported={preferences => onBackupImported?.(preferences)} />}
+    </header>
+    {!isPreviewMode && backupMessage && <p role="status">{backupMessage}</p>}
+
     <div className="backup-editable" inert={backupBusy}>
 
 
