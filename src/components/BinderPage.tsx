@@ -1,5 +1,5 @@
+import type { PointerEvent } from 'react'
 import type { BinderPage as BinderPageType } from '../types/PokemonCards'
-import { useRef, useState } from 'react'
 interface BinderPageProps {
   page: BinderPageType
   onSlotClick?: (slotId: string) => void
@@ -10,7 +10,7 @@ interface BinderPageProps {
   highlightedSlotId: string | null
   ownedCardIds: Set<string>
   onRenamePage?: (pageNumber: number) => void
-  onTouchCardDrop?: (sourceSlotId: string, targetSlotId: string) => void
+  onTouchCardStart?: (event: PointerEvent<HTMLButtonElement>, slotId: string, image?: string) => void
 }
 
 function BinderPage({
@@ -23,118 +23,8 @@ function BinderPage({
     highlightedSlotId,
     ownedCardIds,
     onRenamePage,
-    onTouchCardDrop,
+    onTouchCardStart,
 }: BinderPageProps) {
-  const isTouchDragging = useRef(false)
-  const touchSourceSlotId = useRef<string | null>(null)
-  const [floatingCard, setFloatingCard] = useState<{
-  image: string
-  x: number
-  y: number
-} | null>(null)
-
-  const touchStartPosition = useRef<{ x: number; y: number } | null>(null)
-
-const cancelLongPress = () => {
-  touchStartPosition.current = null
-}
-
-const finishTouchDrag = (
-  event: React.TouchEvent<HTMLButtonElement>
-) => {
-  if (isTouchDragging.current) {
-    const touch = event.changedTouches[0]
-
-    if (touch) {
-      const element = document.elementFromPoint(
-        touch.clientX,
-        touch.clientY
-      )
-
-      const targetPocket = element?.closest(
-        '[data-binder-slot-id]'
-      )
-
-      const targetSlotId = targetPocket?.getAttribute(
-        'data-binder-slot-id'
-      )
-
-      console.log('Dropped over pocket:', targetSlotId)
-      if (touchSourceSlotId.current && targetSlotId) {
-        onTouchCardDrop?.(touchSourceSlotId.current, targetSlotId)
-      }
-    }
-  }
-
-  isTouchDragging.current = false
-  touchSourceSlotId.current = null
-  setFloatingCard(null)
-  cancelLongPress()
-}
-
-const startLongPress = (
-  event: React.TouchEvent<HTMLButtonElement>,
-  slotId: string,
-  hasCard: boolean
-) => {
-  if (!isRearrangeMode || isPreviewMode || !hasCard || event.touches.length !== 1) return
-
-  cancelLongPress()
-
-  const touch = event.touches[0]
-
-  touchStartPosition.current = {
-    x: touch.clientX,
-    y: touch.clientY,
-  }
-
-  const cardImage = page.slots.find(
-    (slot) => slot.id === slotId
-  )?.card?.image
-
-  const cardImageUrl = cardImage ? `${cardImage}/high.webp` : null
-
-isTouchDragging.current = true
-touchSourceSlotId.current = slotId
-
-if (cardImageUrl) {
-  setFloatingCard({
-    image: cardImageUrl,
-    x: touch.clientX,
-    y: touch.clientY,
-  })
-}
-
-console.log('Touch drag activated:', slotId)
-}
-
-
-const moveLongPress = (event: React.TouchEvent<HTMLButtonElement>) => {
-  if (!touchStartPosition.current || event.touches.length !== 1) {
-    cancelLongPress()
-    return
-  }
-
-  const touch = event.touches[0]
-  if (isTouchDragging.current) {
-  setFloatingCard((current) =>
-    current
-      ? {
-          ...current,
-          x: touch.clientX,
-          y: touch.clientY,
-        }
-      : null
-  )
-}
-  const deltaX = touch.clientX - touchStartPosition.current.x
-  const deltaY = touch.clientY - touchStartPosition.current.y
-
-  if (!isTouchDragging.current && Math.hypot(deltaX, deltaY) > 12) {
-    cancelLongPress()
-  }
-}
-
   return (
     <section className="binder-page">
       <div
@@ -167,22 +57,11 @@ const moveLongPress = (event: React.TouchEvent<HTMLButtonElement>) => {
                     onSlotClick?.(slot.id)
                 }
             }}
-          onTouchStart={(event) => {
-            startLongPress(event, slot.id, Boolean(slot.card))
-          }}
-          onTouchMove={moveLongPress}
-          onTouchEnd={(event) => {
-            finishTouchDrag(event)
-          }}
-
-
-          onTouchCancel={() => {
-            isTouchDragging.current = false
-            setFloatingCard(null)
-            touchSourceSlotId.current = null
-            cancelLongPress()
-          }}
-
+            onPointerDown={(event) => {
+              if (event.pointerType === 'touch' && isRearrangeMode && !isPreviewMode && slot.card) {
+                onTouchCardStart?.(event, slot.id, slot.card.image)
+              }
+            }}
 
             onContextMenu={(event) => {
               if (event.nativeEvent instanceof MouseEvent && event.nativeEvent.button === 2) {
@@ -269,19 +148,6 @@ const moveLongPress = (event: React.TouchEvent<HTMLButtonElement>) => {
 
 
     
-
-    {floatingCard && (
-      <img
-        src={floatingCard.image}
-        alt="Dragging Pokémon card"
-        className="binder-floating-card"
-        style={{
-          left: floatingCard.x,
-          top: floatingCard.y,
-        }}
-        draggable={false}
-      />
-    )}
 
   </section>
   )

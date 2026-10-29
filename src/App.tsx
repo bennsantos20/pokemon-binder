@@ -988,6 +988,14 @@ return (
           highlightedSlotId={highlightedBinderSlotId}
           ownedCardIds={ownedCardIds}
           onRenamePage={handleRenameBinderPage}
+          isMobile={isMobile}
+          canDragPrevious={mobilePage > 1}
+          canDragNext={mobilePage < binderPages.length}
+          onDragPageTurn={(direction) => {
+            setMobilePage((page) => Math.max(1, Math.min(
+              binderPages.length, page + (direction === 'left' ? -1 : 1)
+            )))
+          }}
           onSwipe={(direction) => {
             if (isRearrangeMode) return
             
