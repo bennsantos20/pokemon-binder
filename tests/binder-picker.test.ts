@@ -29,6 +29,7 @@ function picker() {
       document: { addEventListener: (name: string, fn: any) => listeners.set(name, fn), removeEventListener: (name: string) => listeners.delete(name) },
       require(name: string) {
         if (name === '../services/latestRequest') return execute('src/services/latestRequest.ts')
+        if (name === '../services/variants') return execute('src/services/variants.ts')
         if (name === '../services/tcgdex') return { searchCards: fetch('search'), getCardById: fetch('detail') }
         if (name === 'react') return {
           useState(initial: any) { const index = cursor++; if (first) states[index] = typeof initial === 'function' ? initial() : initial;
@@ -115,4 +116,18 @@ test('picker Grid/List selection survives request changes and Back to Results', 
   ui.search('cards'); ui.calls[0].resolve([card('a')]); await settle(); ui.render(); ui.choose('a')
   ui.calls[1].resolve(detail('a')); await settle(); ui.render(); ui.back()
   assert.ok(ui.find(n => String(n.props?.className).includes('binder-search-results-list')))
+})
+
+test('picker safely offers unselected Printing Unspecified for all unusable metadata shapes', async () => {
+  for (const metadata of [undefined, null, [], {}, 'invalid', [null, {}]]) {
+    const ui = picker(); ui.search('a'); ui.calls[0].resolve([card('a')]); await settle(); ui.render(); ui.choose('a')
+    ui.calls[1].resolve({ ...detail('a'), variants_detailed: metadata }); await settle(); ui.render()
+    assert.ok(ui.text().includes('Printing information is unavailable. This does not mean the card is unavailable.'))
+    assert.equal(ui.find(n => n.props?.className === 'binder-place-card-button').props.disabled, true)
+    ui.find(n => n.props?.className === 'binder-variant-option').props.onClick(); ui.render()
+    ui.find(n => n.props?.className === 'binder-place-card-button').props.onClick()
+    assert.equal(ui.placed[0][1].variantId, 'urn:pokemon-binder:printing:unspecified:v1')
+    ui.back(); ui.choose('a'); ui.calls[2].resolve({ ...detail('a'), variants_detailed: metadata }); await settle(); ui.render()
+    assert.equal(ui.find(n => n.props?.className === 'binder-place-card-button').props.disabled, true)
+  }
 })

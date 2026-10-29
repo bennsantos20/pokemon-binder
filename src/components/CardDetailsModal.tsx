@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { resolveVariants, variantOptionLabel, VARIANTS_UNAVAILABLE_MESSAGE } from '../services/variants'
 import type {
   CardVariant,
   PokemonCardDetails,
@@ -13,32 +14,16 @@ interface CardDetailsModalProps {
   ) => void
 }
 
-function formatVariantName(type: string) {
-  if (type === 'reverse') {
-    return 'Reverse Holo'
-  }
-
-  if (type === 'holo') {
-    return 'Holo'
-  }
-
-  if (type === 'normal') {
-    return 'Normal'
-  }
-
-  return type
-}
-
 function CardDetailsModal({
   card,
   onClose,
   onAdd,
 }: CardDetailsModalProps) {
   
-    const variants = card.variants_detailed ?? []
+    const { variants, unavailable, initialSelection } = resolveVariants(card.variants_detailed)
 
   const [selectedVariant, setSelectedVariant] =
-    useState<CardVariant | null>(variants[0] ?? null)
+    useState<CardVariant | null>(initialSelection)
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -79,6 +64,10 @@ function CardDetailsModal({
           <div className="variant-section">
             <h3>Choose a variant</h3>
 
+            {unavailable && <>
+              <p role="status">{VARIANTS_UNAVAILABLE_MESSAGE}</p>
+              <p>Select Printing Unspecified to record this card without confirming its foil, stamp, or size. It stays separate from confirmed printings.</p>
+            </>}
             <div className="variant-list">
               {variants.map((variant) => (
                 <button
@@ -89,13 +78,10 @@ function CardDetailsModal({
                       ? 'variant-option selected'
                       : 'variant-option'
                   }
+                  aria-pressed={selectedVariant?.variantId === variant.variantId}
                   onClick={() => setSelectedVariant(variant)}
                 >
-                  <span>{formatVariantName(variant.type)}</span>
-
-                  <span className="variant-size">
-                    {variant.size}
-                  </span>
+                  <span>{variantOptionLabel(variant, variants)}</span>
                 </button>
               ))}
             </div>

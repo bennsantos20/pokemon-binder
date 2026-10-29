@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 import { transpileModule, ModuleKind, JsxEmit } from 'typescript'
 import { createBinderPage, storageKeys } from '../src/services/storage.ts'
+import { UNSPECIFIED_VARIANT } from '../src/services/variants.ts'
 
 function deferred() {
   let resolve!: (value: unknown) => void
@@ -210,4 +211,30 @@ test('choosing a different binder/collection action invalidates pending details'
   app.calls[0].resolve(details('binder')); await settle(); app.render()
   assert.equal(app.find(n => n.type === './components/CardDetailsModal'), undefined)
   assert.ok(app.find(n => n.type === './components/BinderCardPicker'))
+})
+
+test('unspecified quantities accumulate separately, with correct binder placement and ownership matching', async () => {
+  const app = appHarness()
+  const raw = { ...details('a'), variants_detailed: null }
+  app.search('a'); app.calls[0].resolve([card('a')]); await settle(); app.render()
+  for (let i = 0; i < 2; i++) {
+    app.choose('a'); app.calls[i + 1].resolve(raw); await settle(); app.render()
+    app.find(n => n.type === './components/CardDetailsModal').props.onAdd(raw, UNSPECIFIED_VARIANT); app.render()
+  }
+  app.choose('a'); app.calls[3].resolve(details('a')); await settle(); app.render()
+  app.find(n => n.type === './components/CardDetailsModal').props.onAdd(details('a'), details('a').variants_detailed[0]); app.render()
+  app.find(n => n.props?.className === 'collection-toggle-button').props.onClick(); app.render()
+  const collectionCard = (variantId: string) => app.find(n => n.type === './components/CollectionCard' && n.props.card.variant.variantId === variantId)
+  assert.equal(collectionCard(UNSPECIFIED_VARIANT.variantId).props.card.quantity, 2)
+  assert.equal(collectionCard('a-normal').props.card.quantity, 1)
+  for (const [slot, variant] of [[1, UNSPECIFIED_VARIANT], [2, details('a').variants_detailed[0]]] as const) {
+    app.find(n => n.type === './components/BinderSpread').props.onSlotClick(`page-1-slot-${slot}`); app.render()
+    app.find(n => n.type === './components/BinderCardPicker').props.onPlaceCard(raw, variant); app.render()
+  }
+  assert.equal(collectionCard(UNSPECIFIED_VARIANT.variantId).props.binderPlacements[0].slotNumber, 1)
+  assert.equal(collectionCard('a-normal').props.binderPlacements[0].slotNumber, 2)
+  app.find(n => n.type === './components/BinderSpread').props.onSlotClick('page-1-slot-1'); app.render()
+  const actions = app.find(n => n.type === './components/BinderCardActions')
+  assert.equal(actions.props.isOwned, true)
+  assert.equal(actions.props.card.variant.variantId, UNSPECIFIED_VARIANT.variantId)
 })

@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useState } from 'react'
 import { createLatestRequest, isAbortError } from '../services/latestRequest'
+import { resolveVariants, variantOptionLabel, VARIANTS_UNAVAILABLE_MESSAGE } from '../services/variants'
 import { 
     getCardById,
     searchCards,
@@ -109,7 +110,7 @@ function BinderCardPicker({
       const details = await getCardById(card.id, request.signal)
       if (request.isCurrent()) {
         setSelectedCard(details)
-        setSelectedVariant(details.variants_detailed?.[0] ?? null)
+        setSelectedVariant(resolveVariants(details.variants_detailed).initialSelection)
       }
     } catch (error) {
       if (request.isCurrent() && !isAbortError(error)) {
@@ -183,6 +184,7 @@ function handlePlaceCollectionCard() {
   onPlaceCard(cardDetails, selectedCollectionCard.variant)
 }
     
+  const resolvedVariants = resolveVariants(selectedCard?.variants_detailed)
   return (
     <div
       className="binder-picker-backdrop"
@@ -290,8 +292,12 @@ function handlePlaceCollectionCard() {
 
           <h4>Choose Variant</h4>
 
+          {resolvedVariants.unavailable && <>
+            <p role="status">{VARIANTS_UNAVAILABLE_MESSAGE}</p>
+            <p>Select Printing Unspecified to plan this card without confirming its foil, stamp, or size. It stays separate from confirmed printings.</p>
+          </>}
           <div className="binder-variant-options">
-            {selectedCard.variants_detailed?.map((variant) => (
+            {resolvedVariants.variants.map((variant) => (
               <button
                 type="button"
                 key={variant.variantId}
@@ -300,9 +306,10 @@ function handlePlaceCollectionCard() {
                     ? 'binder-variant-option selected'
                     : 'binder-variant-option'
                 }
+                aria-pressed={selectedVariant?.variantId === variant.variantId}
                 onClick={() => setSelectedVariant(variant)}
               >
-                {variant.type}
+                {variantOptionLabel(variant, resolvedVariants.variants)}
               </button>
             ))}
           </div>
