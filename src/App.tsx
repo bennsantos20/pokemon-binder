@@ -1,5 +1,6 @@
-import { useEffect,useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { searchCards, getCardById } from './services/tcgdex'
+import { completeBinder, isCollection, loadBinder, loadJson, readText, saveJson, saveText, storageKeys } from './services/storage'
 import type { 
   BinderCard,
   BinderPage as BinderPageType,
@@ -20,6 +21,23 @@ import { BookOpen, ChevronDown, Check, Pencil, X, Eye, ArrowLeft, Maximize2, Tra
 import CollectionBinderPlacement from './components/CollectionBinderPlacement'
 
 function App() {
+  const [savedData] = useState(() => ({
+    collection: loadJson(storageKeys.collection, isCollection),
+    binder: loadBinder(),
+    expanded: readText(storageKeys.expanded),
+    spread: readText(storageKeys.spread),
+    page: readText(storageKeys.page),
+  }))
+  const [saveErrors, setSaveErrors] = useState<Record<string, string | null>>({})
+  const recordSaveError = useEffectEvent((key: string, error: string | null) => {
+    setSaveErrors(current => current[key] === error ? current : { ...current, [key]: error })
+  })
+  const storageWarnings = [
+    ...Object.values(savedData)
+      .filter(saved => saved.status === 'invalid' || saved.status === 'unavailable')
+      .map(saved => `${saved.key}: Saved data could not be loaded safely. The original value is untouched. Changes to this data are temporary and will not be saved. Back up your data before attempting recovery.`),
+    ...Object.entries(saveErrors).filter(([, error]) => error).map(([key, error]) => `${key}: ${error}`),
+  ]
   const [searchTerm, setSearchTerm] = useState('')
   const [cards, setCards] = useState<PokemonCard[]>([])
   const [mainSearchView, setMainSearchView] =
@@ -27,9 +45,7 @@ function App() {
   
   const [isCollectionExpanded, setIsCollectionExpanded] =
     useState<boolean>(() => {
-      const savedPreference = localStorage.getItem(
-        'pokemon-binder-collection-expanded'
-      )
+      const savedPreference = savedData.expanded.status === 'valid' ? savedData.expanded.value : null
 
       return savedPreference === 'true'
     })
@@ -122,70 +138,12 @@ const [renamePageValue, setRenamePageValue] =
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   
-function createBinderPage(pageNumber: number): BinderPageType {
-  return {
-    id: `page-${pageNumber}`,
-    pageNumber,
-    rows: 3,
-    columns: 3,
-    slots: Array.from({ length: 9 }, (_, index) => ({
-      id: `page-${pageNumber}-slot-${index + 1}`,
-      card: null,
-    })),
-  }
-}
-
-const [binderPages, setBinderPages] =
-  useState<BinderPageType[]>(() => {
-    const savedBinderPages = localStorage.getItem(
-      'pokemon-binder-pages'
-    )
-
-    if (savedBinderPages) {
-      try {
-        const pages = JSON.parse(
-          savedBinderPages
-        ) as BinderPageType[]
-
-        while (pages.length < 40) {
-          pages.push(createBinderPage(pages.length + 1))
-        }
-
-    return pages
-  } catch {
-    // Try the old single-page save instead
-  }
-}
-
-
-    const savedBinderPage = localStorage.getItem(
-      'pokemon-binder-page-1'
-    )
-
-    if (savedBinderPage) {
-      try {
-        const page = JSON.parse(
-          savedBinderPage
-        ) as BinderPageType
-
-        return [
-          page,
-          ...Array.from({ length: 39 }, (_, index) =>
-            createBinderPage(index + 2)
-          ),
-        ]
-      } catch {
-        // Fall back to a fresh binder
-      }
-    }
-
-      return Array.from({ length: 40 }, (_, index) =>
-        createBinderPage(index + 1)
-      )
-  })
+const [binderPages, setBinderPages] = useState<BinderPageType[]>(() =>
+  savedData.binder.status === 'valid' ? savedData.binder.value : completeBinder([])
+)
 
   const [currentSpread, setCurrentSpread] = useState<number>(() => {
-    const savedSpread = localStorage.getItem('pokemon-binder-current-spread')
+    const savedSpread = savedData.spread.status === 'valid' ? savedData.spread.value : null
     const parsedSpread = Number(savedSpread)
 
     return savedSpread !== null && Number.isInteger(parsedSpread) &&
@@ -195,7 +153,7 @@ const [binderPages, setBinderPages] =
   })
 
   const [mobilePage, setMobilePage] = useState<number>(() => {
-    const savedPage = localStorage.getItem('pokemon-binder-current-page')
+    const savedPage = savedData.page.status === 'valid' ? savedData.page.value : null
     const parsedPage = Number(savedPage)
 
     if (savedPage !== null && Number.isInteger(parsedPage) &&
@@ -343,20 +301,9 @@ const rightPage = isMobile
 
 
 
-  const [collection, setCollection] = useState<OwnedCard[]>(() => {
-  const savedCollection = localStorage.getItem('pokemon-binder-collection')
-
-
-  if (!savedCollection) {
-    return []
-  }
-
-  try {
-    return JSON.parse(savedCollection) as OwnedCard[]
-  } catch {
-    return []
-  }
-})
+  const [collection, setCollection] = useState<OwnedCard[]>(() =>
+    savedData.collection.status === 'valid' ? savedData.collection.value : []
+  )
 
 const ownedCardIds = new Set(
   collection
@@ -567,19 +514,16 @@ if (!targetSlot) return
 }
 
 useEffect(() => {
-  localStorage.setItem(
-    'pokemon-binder-collection',
-    JSON.stringify(collection)
-  )
-}, [collection])
+  if (savedData.collection.status === 'invalid' || savedData.collection.status === 'unavailable') return
+  // oxlint-disable-next-line react/set-state-in-effect -- Report the result of an external storage write.
+  recordSaveError(storageKeys.collection, saveJson(savedData.collection, collection))
+}, [collection, savedData])
 
 
 useEffect(() => {
-  localStorage.setItem(
-    'pokemon-binder-collection-expanded',
-    String(isCollectionExpanded)
-  )
-}, [isCollectionExpanded])
+  // oxlint-disable-next-line react/set-state-in-effect -- Report the result of an external storage write.
+  recordSaveError(storageKeys.expanded, saveText(savedData.expanded, String(isCollectionExpanded)))
+}, [isCollectionExpanded, savedData])
 
 useEffect(() => {
   if (!isPageNavigatorOpen) return
@@ -633,11 +577,10 @@ useEffect(() => {
 
 
 useEffect(() => {
-  localStorage.setItem(
-    'pokemon-binder-pages',
-    JSON.stringify(binderPages)
-  )
-}, [binderPages])
+  if (savedData.binder.status === 'invalid' || savedData.binder.status === 'unavailable') return
+  // oxlint-disable-next-line react/set-state-in-effect -- Report the result of an external storage write.
+  recordSaveError(storageKeys.binder, saveJson(savedData.binder, binderPages))
+}, [binderPages, savedData])
 
 
 useEffect(() => {
@@ -665,15 +608,15 @@ useEffect(() => {
 
 
 useEffect(() => {
-  localStorage.setItem(
-    'pokemon-binder-current-spread',
-    String(isMobile ? Math.floor(mobilePage / 2) : currentSpread)
-  )
+  // oxlint-disable-next-line react/set-state-in-effect -- Report the result of an external storage write.
+  recordSaveError(storageKeys.spread, saveText(savedData.spread,
+    String(isMobile ? Math.floor(mobilePage / 2) : currentSpread)))
 
   if (isMobile) {
-    localStorage.setItem('pokemon-binder-current-page', String(mobilePage))
+    // oxlint-disable-next-line react/set-state-in-effect -- Report the result of an external storage write.
+    recordSaveError(storageKeys.page, saveText(savedData.page, String(mobilePage)))
   }
-}, [currentSpread, mobilePage, isMobile])
+}, [currentSpread, mobilePage, isMobile, savedData])
 
 useEffect(() => {
   function handleFullscreenChange() {
@@ -902,6 +845,13 @@ return (
       isFullscreen ? 'app-fullscreen' : ''
     }`}
   >
+    {storageWarnings.length > 0 && (
+      <aside role="status" aria-label="Storage warning">
+        <strong>Some data is not being saved</strong>
+        <ul>{storageWarnings.map(message => <li key={message}>{message}</li>)}</ul>
+        <p>Keep this page open to preserve unsaved changes. Reloading or closing it may lose those changes.</p>
+      </aside>
+    )}
     <header className="app-header">
       <p className="eyebrow">POKÉMON TCG BINDER PLANNER</p>
       <h1>Pokémon Binder</h1>
