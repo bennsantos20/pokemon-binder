@@ -95,19 +95,21 @@ function CollectionCardActions({
     <div className="collection-quantity-controls">
       <button
         type="button"
+        aria-label={`Decrease quantity of ${card.name}`}
         disabled={quantity <= 1}
         onClick={() => setQuantity((current) => Math.max(1, current - 1))}
       >
-        <Minus size={16} strokeWidth={2} />
+        <Minus size={16} strokeWidth={2} aria-hidden="true" />
       </button>
 
       <strong>{quantity}</strong>
 
       <button
         type="button"
+        aria-label={`Increase quantity of ${card.name}`}
         onClick={() => setQuantity((current) => current + 1)}
       >
-        <Plus size={16} strokeWidth={2} />
+        <Plus size={16} strokeWidth={2} aria-hidden="true" />
       </button>
     </div>
 

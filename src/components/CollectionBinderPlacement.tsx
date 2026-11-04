@@ -135,10 +135,11 @@ function changePage(direction: number) {
         <div className="collection-placement-navigation">
           <button
             type="button"
+            aria-label="Previous binder page"
             onClick={() => changePage(-1)}
             disabled={pageIndex === 0}
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={18} aria-hidden="true" />
           </button>
 
           <div
@@ -218,10 +219,11 @@ function changePage(direction: number) {
 
           <button
             type="button"
+            aria-label="Next binder page"
             onClick={() => changePage(1)}
             disabled={pageIndex === pages.length - 1}
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={18} aria-hidden="true" />
           </button>
         </div>
 

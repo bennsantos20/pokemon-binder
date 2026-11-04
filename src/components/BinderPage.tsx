@@ -34,7 +34,43 @@ function BinderPage({
           gridTemplateRows: `repeat(${page.rows}, 1fr)`,
         }}
       >
-        {page.slots.map((slot, index) => (
+        {page.slots.map((slot, index) => {
+          const pocketLabel = `Page ${page.pageNumber}, pocket ${index + 1}: ${
+            slot.card
+              ? `Occupied by ${slot.card.name}, ${
+                  ownedCardIds.has(`${slot.card.cardId}-${slot.card.variant.variantId}`)
+                    ? 'owned'
+                    : 'not owned'
+                }`
+              : 'Empty'
+          }`
+          const content = slot.card ? (
+            <img src={`${slot.card.image}/high.webp`} alt="" />
+          ) : (
+            <div className="empty-pocket">
+              {!isPreviewMode && (
+                <>
+                  <span className="empty-pocket-plus">+</span>
+                  <span>Slot {index + 1}</span>
+                </>
+              )}
+            </div>
+          )
+
+          if (isPreviewMode) {
+            return (
+              <div
+                className="binder-pocket"
+                key={slot.id}
+                role="img"
+                aria-label={pocketLabel}
+              >
+                {content}
+              </div>
+            )
+          }
+
+          return (
           <button
             className={`binder-pocket ${
               !isPreviewMode && highlightedSlotId === slot.id
@@ -50,6 +86,7 @@ function BinderPage({
                 : ''
             }`}
             type="button"
+            aria-label={pocketLabel}
             key={slot.id}
             data-binder-slot-id={slot.id}
             onClick={() => {
@@ -89,23 +126,10 @@ function BinderPage({
                 }
                 }}
           >
-            {slot.card ? (
-              <img
-                src={`${slot.card.image}/high.webp`}
-                alt={slot.card.name}
-              />
-            ) : (
-                <div className="empty-pocket">
-                    {!isPreviewMode && (
-                        <>
-                            <span className="empty-pocket-plus">+</span>
-                            <span>Slot {index + 1}</span>
-                        </>
-                    )}
-                </div>
-            )}
+            {content}
           </button>
-        ))}
+          )
+        })}
       </div>
 
       
