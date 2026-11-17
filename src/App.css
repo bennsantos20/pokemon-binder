@@ -57,7 +57,7 @@
 }
 
 .search-bar input::placeholder {
-  color: #777c86;
+  color: #9ba2ad;
 }
 
 .search-bar button {
@@ -134,7 +134,7 @@
   height: 100%;
   border: 1px dashed #42464e;
   border-radius: 12px;
-  color: #737881;
+  color: #9ba2ad;
   text-align: center;
 }
 
@@ -644,7 +644,7 @@
 .collection-card-number {
   margin: 4px 0 10px;
 
-  color: #85878e;
+  color: #9ba2ad;
   font-size: 0.75rem;
 }
 
@@ -742,7 +742,7 @@
 
   overflow: hidden;
 
-  color: #55705a;
+  color: #334f3a;
   background:
     linear-gradient(
       145deg,
@@ -810,7 +810,7 @@
   width: 32px;
   height: 32px;
 
-  color: #54705a;
+  color: #334f3a;
 
   border: 1px solid rgba(73, 101, 76, 0.38);
   border-radius: 50%;
@@ -822,7 +822,7 @@
 .binder-page-number {
   margin: 14px 4px 0;
 
-  color: #4f6854;
+  color: #334f3a;
 
   font-size: 0.75rem;
   font-weight: 700;
@@ -2956,7 +2956,7 @@ button.collection-binder-indicator:focus-visible {
 .binder-page-custom-name {
   font-size: 11px;
   font-weight: 600;
-  color: #526b56;
+  color: #334f3a;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3340,6 +3340,7 @@ button.collection-binder-indicator:focus-visible {
 /* Step 31E - Clickable Binder Page Labels */
 
 .binder-page-label-button {
+  min-height: 24px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -3361,7 +3362,7 @@ button.collection-binder-indicator:focus-visible {
 
 .binder-page-label-button:hover .binder-page-number,
 .binder-page-label-button:hover .binder-page-custom-name {
-  color: #68479b;
+  color: #532d83;
 }
 
 .binder-page-label-button:focus-visible {
@@ -4734,3 +4735,70 @@ background-size: 16px;
 .backup-confirm { display: block; margin: 20px 0; }
 .backup-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .backup-recovery { max-width: 640px; margin: 40px auto; padding: 20px; }
+
+
+/* Accessibility polish: keep the theme and geometry, make keyboard focus explicit. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+:is(.app, .backup-recovery) :is(button, input, select, textarea, a[href], [tabindex]):focus-visible {
+  outline: 3px solid #c4a0f7;
+  outline-offset: 3px;
+}
+
+.app :is(.binder-pocket, .collection-placement-pocket):focus-visible {
+  animation: none;
+  outline-color: #4b1f75;
+  outline-offset: -4px;
+  box-shadow: inset 0 0 0 6px #fff;
+}
+
+.app .binder-page-label-button:focus-visible {
+  outline-color: #4b1f75;
+}
+
+.app .collection-card-image-action:focus-visible {
+  outline-offset: -4px;
+  box-shadow: inset 0 0 0 6px #17181d;
+}
+
+.search-bar,
+.binder-card-search input,
+.main-collection-search-bar input,
+.main-collection-filter select,
+.binder-collection-search,
+.binder-collection-filters select,
+.collection-placement-page-search,
+.binder-page-navigator-search input,
+.rename-page-input {
+  border-color: #8a929e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app *, .app *::before, .app *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Remove decorative hover movement, retaining transforms that position the UI. */
+  .app :is(
+    .search-bar button, .card-result, .add-button, .modal-close, .variant-option,
+    .confirm-add-button, .collection-card, .binder-pocket, .binder-picker-close,
+    .binder-picker-option, .binder-search-result, .binder-navigation button,
+    .binder-view-controls button, .collection-card-image:has(.collection-card-image-action),
+    .binder-picker-back, .binder-page-rename, .collection-placement-pocket,
+    .collection-placement-page-option, .collection-placement-confirm-actions button
+  ):hover {
+    transform: none !important;
+  }
+}

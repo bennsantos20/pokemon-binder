@@ -95,6 +95,9 @@ function CollectionCard({
     className="collection-binder-indicator"
     onClick={() => onBinderClick(binderPlacements)}
     title="View card in binder"
+    aria-label={`${card.name}: In Binder, ${binderPlacements.length === 1
+      ? `Page ${binderPlacements[0].pageNumber}, pocket ${binderPlacements[0].slotNumber}`
+      : `${binderPlacements.length} locations`}. View binder location${binderPlacements.length === 1 ? '' : 's'}`}
   >
     <span className="collection-binder-indicator-icon">
       📖

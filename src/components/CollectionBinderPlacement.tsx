@@ -215,6 +215,7 @@ function changePage(direction: number) {
                     <button
                         key={binderPage.id}
                         type="button"
+                        aria-current={pageIndex === index ? 'page' : undefined}
                         className={`collection-placement-page-option ${
                         pageIndex === index ? 'active' : ''
                         }`}

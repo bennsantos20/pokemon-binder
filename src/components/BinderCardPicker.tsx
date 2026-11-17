@@ -630,7 +630,7 @@ function handlePlaceCollectionCard() {
 )}
 
 {filteredCollection.length === 0 && (
-  <p>No matching cards found.</p>
+  <p role="status">No matching cards found.</p>
 )}
 
 {selectedCollectionCard && (

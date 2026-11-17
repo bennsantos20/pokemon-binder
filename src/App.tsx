@@ -1,3 +1,5 @@
+import AccessibilityStatus from './components/AccessibilityStatus'
+import { binderViewLabel } from './services/accessibility'
 import AccessibleDialog from './components/AccessibleDialog'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { searchCards, getCardById } from './services/tcgdex'
@@ -147,6 +149,7 @@ const [pageNavigatorSearch, setPageNavigatorSearch] = useState('')
 
 const pageNavigatorRef = useRef<HTMLDivElement>(null)
 const activePageOptionRef = useRef<HTMLButtonElement>(null)
+const pageNavigatorTriggerRef = useRef<HTMLButtonElement>(null)
 const [renamingPageNumber, setRenamingPageNumber] =
   useState<number | null>(null)
 
@@ -189,6 +192,10 @@ const [binderPages, setBinderPages] = useState<BinderPageType[]>(() =>
     // Older saves only identify a spread; open its first binder page.
     return Math.max(1, Math.min(binderPages.length, currentSpread * 2))
   })
+
+  const currentPageLabel = binderViewLabel(binderPages.length, isMobile, mobilePage, currentSpread)
+  const isFirstBinderView = isMobile ? mobilePage === 1 : currentSpread === 0
+  const isLastBinderView = isMobile ? mobilePage === binderPages.length : currentSpread === Math.ceil(binderPages.length / 2)
 
   const selectedOccupiedSlot = binderPages
   .flatMap((page) => page.slots)
@@ -247,7 +254,7 @@ function handleJumpToBinderPage(pageNumber: number) {
     document
       .querySelector('.binder-section')
       ?.scrollIntoView({
-        behavior: 'smooth',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
         block: 'start',
       })
   })
@@ -571,11 +578,15 @@ useEffect(() => {
   function handleKeyDown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       setIsPageNavigatorOpen(false)
+      pageNavigatorTriggerRef.current?.focus()
     }
   }
 
   document.addEventListener('pointerdown', handlePointerDown)
   document.addEventListener('keydown', handleKeyDown)
+
+  const initialFocus = pageNavigatorRef.current?.querySelector<HTMLInputElement>('input') ?? activePageOptionRef.current
+  initialFocus?.focus({ preventScroll: true })
 
   activePageOptionRef.current?.scrollIntoView({
     block: 'nearest',
@@ -892,6 +903,7 @@ return (
       isFullscreen ? 'app-fullscreen' : ''
     }`}
   >
+    <AccessibilityStatus pages={binderPages} collection={collection} viewLabel={currentPageLabel} />
     {storageWarnings.length > 0 && (
       <aside role="status" aria-label="Storage warning">
         <strong>Some data is not being saved</strong>
@@ -1046,6 +1058,7 @@ return (
           <div className="binder-navigation">
             <button
               type="button"
+              aria-label={isFirstBinderView ? `Back to last binder ${isMobile ? 'page' : 'spread'}` : `Previous binder ${isMobile ? 'page' : 'spread'}`}
               onClick={() => {
                 if (isMobile) {
                   setMobilePage((page) =>
@@ -1060,7 +1073,7 @@ return (
                 }
               }}
           >
-            {currentSpread === 0 ? '↺ Back' : '← Previous'}
+            {isFirstBinderView ? '↺ Back' : '← Previous'}
           </button>
 
 
@@ -1071,30 +1084,27 @@ return (
   <button
     type="button"
     className="binder-page-navigator-trigger"
+    ref={pageNavigatorTriggerRef}
     onClick={handleTogglePageNavigator}
     aria-expanded={isPageNavigatorOpen}
-    aria-label="Choose binder pages"
+    aria-label={`${currentPageLabel}. Choose binder pages`}
+    aria-controls="binder-page-navigator-menu"
   >
-    <BookOpen size={18} strokeWidth={1.8} />
+    <BookOpen size={18} strokeWidth={1.8} aria-hidden="true" />
 
     <span className="binder-page-navigator-trigger-text">
-      {isMobile
-        ? `Page ${mobilePage}`
-        : currentSpread === 0
-          ? 'Front / Page 1'
-          : currentSpread === Math.ceil(binderPages.length / 2)
-            ? `Page ${binderPages.length} / Back`
-            : `Pages ${currentSpread * 2}–${currentSpread * 2 + 1}`}
+      {currentPageLabel}
     </span>
 
     <ChevronDown
       size={17}
+      aria-hidden="true"
       className={isPageNavigatorOpen ? 'navigator-chevron-open' : ''}
     />
   </button>
 
   {isPageNavigatorOpen && (
-    <div className="binder-page-navigator-menu">
+    <div id="binder-page-navigator-menu" className="binder-page-navigator-menu">
       <div className="binder-page-navigator-heading">
         <BookOpen size={16} />
         <span>Choose Binder Pages</span>
@@ -1179,6 +1189,7 @@ return (
                     ? activePageOptionRef
                     : null
                 }
+                aria-current={(isMobile ? mobilePage === selectedPageNumber : currentSpread === spread) ? 'page' : undefined}
                 className={`binder-page-navigator-option ${
                   (isMobile
                     ? mobilePage === selectedPageNumber
@@ -1195,6 +1206,7 @@ return (
 
                   setPageNavigatorSearch('')
                   setIsPageNavigatorOpen(false)
+                  pageNavigatorTriggerRef.current?.focus()
                 }}
               >
                 
@@ -1214,7 +1226,7 @@ return (
                 {(isMobile
                   ? mobilePage === selectedPageNumber
                   : currentSpread === spread) && (
-                  <Check size={17} strokeWidth={2} />
+                  <Check size={17} strokeWidth={2} aria-hidden="true" />
                 )}
               </button>
             )
@@ -1228,6 +1240,7 @@ return (
 
             <button
               type="button"
+              aria-label={isLastBinderView ? 'Front, return to Page 1' : `Next binder ${isMobile ? 'page' : 'spread'}`}
               onClick={() => {
   if (isMobile) {
     setMobilePage((page) =>
@@ -1242,7 +1255,7 @@ return (
   }
 }}
             >
-              {currentSpread === Math.ceil(binderPages.length / 2)
+              {isLastBinderView
                 ? 'Front ↻'
                 : 'Next →'}
             </button>
@@ -1541,7 +1554,7 @@ return (
         )}
 
         {filteredMainCollection.length === 0 && (
-          <p className="main-collection-empty">
+          <p className="main-collection-empty" role="status">
           No matching cards found. Try another search!
         </p>
       )}

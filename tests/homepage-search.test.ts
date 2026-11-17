@@ -32,6 +32,7 @@ function appHarness(initial: Record<string, string> = {}) {
     runInNewContext(transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ModuleKind.CommonJS, jsx: JsxEmit.ReactJSX } }).outputText, {
       exports, window, AbortController, document: { addEventListener() {}, removeEventListener() {} },
       require(name: string) {
+        if (name === './services/accessibility') return execute('src/services/accessibility.ts')
         if (name === './services/storage') return execute('src/services/storage.ts')
         if (name === './services/latestRequest') return execute('src/services/latestRequest.ts')
         if (name === './services/tcgdex') return { searchCards: request('search'), getCardById: request('detail') }
