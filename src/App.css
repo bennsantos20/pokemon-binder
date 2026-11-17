@@ -299,7 +299,8 @@
   justify-content: center;
 }
 
-.modal-card-image img {
+.modal-card-image img,
+.modal-card-image > .card-image-fallback {
   display: block;
 
   width: 100%;
@@ -457,7 +458,8 @@
     padding: 24px;
   }
 
-  .modal-card-image img {
+  .modal-card-image img,
+  .modal-card-image > .card-image-fallback {
     max-width: 260px;
   }
 
@@ -580,7 +582,8 @@
   background: #191a1f;
 }
 
-.collection-card-image img {
+.collection-card-image img,
+.collection-card-image > .card-image-fallback {
   display: block;
 
   width: 100%;
@@ -778,7 +781,8 @@
   border-color: rgba(65, 93, 68, 0.5);
 }
 
-.binder-pocket img {
+.binder-pocket img,
+.binder-pocket > .card-image-fallback {
   display: block;
 
   width: 100%;
@@ -1269,6 +1273,7 @@
 }
 
 .binder-search-result img,
+.binder-search-result > .card-image-fallback,
 .binder-search-image-placeholder {
   width: 100%;
   aspect-ratio: 2.5 / 3.5;
@@ -1540,7 +1545,8 @@
   margin-bottom: 24px;
 }
 
-.binder-actions-card img {
+.binder-actions-card img,
+.binder-actions-card > .card-image-fallback {
   width: 100px;
   border-radius: 8px;
 }
@@ -1623,7 +1629,8 @@
   min-width: 0;
 }
 
-.binder-collection-card img {
+.binder-collection-card img,
+.binder-collection-card > .card-image-fallback {
   width: 100%;
   max-width: 125px;
   height: auto;
@@ -1720,7 +1727,8 @@
   padding: 8px 12px;
 }
 
-.binder-collection-grid.list-view .binder-collection-card img {
+.binder-collection-grid.list-view .binder-collection-card img,
+.binder-collection-grid.list-view .binder-collection-card > .card-image-fallback {
   width: 48px;
   max-width: 48px;
   flex-shrink: 0;
@@ -2067,7 +2075,8 @@ button.binder-collection-card {
 }
 
 /* Prevent artwork from stretching */
-.collection-grid.main-list-view .collection-card-image img {
+.collection-grid.main-list-view .collection-card-image img,
+.collection-grid.main-list-view .collection-card-image > .card-image-fallback {
   display: block;
   width: 100%;
   height: auto;
@@ -2277,7 +2286,8 @@ button.binder-collection-card {
   margin-bottom: 24px;
 }
 
-.collection-actions-card img {
+.collection-actions-card img,
+.collection-actions-card > .card-image-fallback {
   width: 90px;
   height: auto;
   flex-shrink: 0;
@@ -3544,7 +3554,8 @@ button.collection-binder-indicator:focus-visible {
   background: #2b2b33;
 }
 
-.remove-collection-card-info img {
+.remove-collection-card-info img,
+.remove-collection-card-info > .card-image-fallback {
   width: 66px;
   height: 92px;
   object-fit: contain;
@@ -3644,7 +3655,8 @@ button.collection-binder-indicator:focus-visible {
   margin: 16px 0;
 }
 
-.binder-placement-card img {
+.binder-placement-card img,
+.binder-placement-card > .card-image-fallback {
   display: block;
   width: 100%;
   max-width: 210px;
@@ -3825,7 +3837,8 @@ button.collection-binder-indicator:focus-visible {
   text-align: left;
 }
 
-.binder-search-results-list .binder-search-result img {
+.binder-search-results-list .binder-search-result img,
+.binder-search-results-list .binder-search-result > .card-image-fallback {
   width: 72px;
   height: 100px;
   flex-shrink: 0;
@@ -4113,7 +4126,8 @@ button.collection-binder-indicator:focus-visible {
     0 0 18px rgba(55, 120, 75, 0.38);
 }
 
-.collection-placement-pocket img {
+.collection-placement-pocket img,
+.collection-placement-pocket > .card-image-fallback {
   display: block;
   width: 100%;
   height: 100%;
@@ -4630,7 +4644,8 @@ background-size: 16px;
 
 /* Prevent native image menus during touchscreen card dragging */
 @media (pointer: coarse) {
-  .binder-pocket img {
+  .binder-pocket img,
+  .binder-pocket > .card-image-fallback {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
@@ -4802,3 +4817,23 @@ background-size: 16px;
     transform: none !important;
   }
 }
+
+/* Keep unavailable artwork in the same image box without adding an interactive layer. */
+.card-image-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  aspect-ratio: 2.5 / 3.5;
+  min-width: 0;
+  overflow: hidden;
+  padding: 6px;
+  border: 1px dashed #718575;
+  border-radius: 8px;
+  background: #202228;
+  color: #d7e6d9;
+  text-align: center;
+  font-size: 12px;
+}
+.card-image-container > .card-image-fallback { width: 100%; height: 100%; }
+.card-image-fallback > div { overflow-wrap: anywhere; max-height: 100%; overflow: hidden; }

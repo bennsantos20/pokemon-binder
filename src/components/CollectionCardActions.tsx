@@ -1,3 +1,4 @@
+import CardImage from './CardImage'
 import { useModalFocus } from '../hooks/useModalFocus'
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { OwnedCard } from '../types/PokemonCards'
@@ -72,12 +73,7 @@ function CollectionCardActions({
         </button>
 
         <div className="collection-actions-card">
-          {card.image && (
-            <img
-              src={`${card.image}/high.webp`}
-              alt={card.name}
-            />
-          )}
+          <CardImage cardId={card.id} name={card.name} image={card.image} />
 
           <div>
             <p className="eyebrow">COLLECTION MANAGER</p>

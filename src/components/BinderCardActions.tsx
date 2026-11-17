@@ -1,3 +1,4 @@
+import CardImage from './CardImage'
 import { useModalFocus } from '../hooks/useModalFocus'
 
 import type { BinderCard } from '../types/PokemonCards'
@@ -51,12 +52,7 @@ function BinderCardActions({
         </button>
 
         <div className="binder-actions-card">
-          {card.image && (
-            <img
-              src={`${card.image}/high.webp`}
-              alt={card.name}
-            />
-          )}
+          <CardImage cardId={card.id} name={card.name} image={card.image} />
 
         <div>
           <h3>{card.name}</h3>

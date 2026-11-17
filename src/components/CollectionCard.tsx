@@ -1,3 +1,4 @@
+import CardImage from './CardImage'
 import type { OwnedCard } from '../types/PokemonCards'
 
 interface CollectionCardProps {
@@ -48,16 +49,7 @@ function CollectionCard({
             title={`Manage ${card.name}`}
          />
         )}
-        {card.image ? (
-          <img
-            src={`${card.image}/high.webp`}
-            alt={card.name}
-          />
-        ) : (
-          <div className="image-placeholder">
-            <span>Image unavailable</span>
-          </div>
-        )}
+        <CardImage cardId={card.id} name={card.name} image={card.image} />
 
         
       </div>

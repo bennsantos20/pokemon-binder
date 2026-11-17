@@ -1,3 +1,4 @@
+import CardImage from './components/CardImage'
 import { createNativeBinderDrag } from './services/nativeBinderDrag'
 import type { DragEvent } from 'react'
 import AccessibilityStatus from './components/AccessibilityStatus'
@@ -1897,10 +1898,7 @@ return (
       </p>
 
       <div className="remove-collection-card-info">
-        <img
-          src={`${selectedManageCard.image}/high.webp`}
-          alt={selectedManageCard.name}
-        />
+        <CardImage cardId={selectedManageCard.id} name={selectedManageCard.name} image={selectedManageCard.image} />
 
         <div>
           <strong>{selectedManageCard.name}</strong>

@@ -1,3 +1,4 @@
+import CardImage from './CardImage'
 import { useModalFocus } from '../hooks/useModalFocus'
 import { useState } from 'react'
 import { resolveVariants, variantOptionLabel, VARIANTS_UNAVAILABLE_MESSAGE } from '../services/variants'
@@ -49,12 +50,7 @@ function CardDetailsModal({
         </button>
 
         <div className="modal-card-image">
-          {card.image && (
-            <img
-              src={`${card.image}/high.webp`}
-              alt={card.name}
-            />
-          )}
+          <CardImage cardId={card.id} name={card.name} image={card.image} />
         </div>
 
         <div className="modal-content">
@@ -95,12 +91,13 @@ function CardDetailsModal({
             </div>
           </div>
 
+          {!card.set && <p role="status">Set information is unavailable. Please reopen this card to try again before adding or placing it.</p>}
           <button
             className="confirm-add-button"
             type="button"
-            disabled={!selectedVariant}
+            disabled={!selectedVariant || !card.set}
             onClick={() => {
-                if (selectedVariant) {
+                if (selectedVariant && card.set) {
                     onAdd(card, selectedVariant)
                 }
             }}

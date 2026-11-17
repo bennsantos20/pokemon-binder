@@ -1,3 +1,4 @@
+import CardImage from './CardImage'
 import type { PokemonCard } from '../types/PokemonCards'
 
 interface CardSearchResultProps {
@@ -12,17 +13,7 @@ function CardSearchResult({
   return (
     <article className="card-result">
       <div className="card-image-container">
-        {card.image ? (
-          <img
-            className="card-image"
-            src={`${card.image}/high.webp`}
-            alt={card.name}
-          />
-        ) : (
-          <div className="image-placeholder">
-            <span>Image unavailable</span>
-          </div>
-        )}
+        <CardImage cardId={card.id} name={card.name} image={card.image} className="card-image" />
       </div>
 
       <div className="card-info">

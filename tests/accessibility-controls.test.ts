@@ -101,7 +101,7 @@ test('editing pockets name page, position, occupancy and exact-printing ownershi
   assert.equal(pockets[1].props['aria-label'], 'Page 4, pocket 2: Occupied by Pikachu, not owned')
   assert.equal(pockets[2].props['aria-label'], 'Page 4, pocket 3: Empty')
   assert.ok(pockets.every(n => n.type === 'button' && n.props.type === 'button'))
-  assert.equal(pockets[0].props.children.props.alt, '')
+  assert.equal(pockets[0].props.children.props.decorative, true)
   assert.equal(pockets[0].props.draggable, true)
   assert.equal(pockets[2].props.draggable, false)
   const dragEvent = { preventDefault() {} }
@@ -129,7 +129,7 @@ test('Preview pockets retain content and styling but have no interactive semanti
     assert.match(pocket.props['aria-label'], /^Page 4, pocket /)
   }
   assert.equal(ui.all().filter(n => n.type === 'button').length, 0)
-  assert.equal(ui.pockets()[0].props.children.props.src, `${card.image}/high.webp`)
+  assert.equal(ui.pockets()[0].props.children.props.image, card.image)
   assert.equal(ui.pockets()[2].props.children.props.className, 'empty-pocket')
   assert.equal(ui.pockets()[2].props.children.props.children, false)
   assert.deepEqual(ui.calls, [])

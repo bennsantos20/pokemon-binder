@@ -270,7 +270,7 @@ test('Move / Swap cancels pending details before opening; selector and confirmat
   assert.equal(picker.pocket(2).props.type, 'button')
   assert.equal(picker.pocket(2).props['aria-pressed'], false)
   assert.match(picker.pocket(2).props['aria-label'], /Page 1, pocket 2: Occupied by Charizard/)
-  assert.ok(picker.find(n => n.type === 'img' && n.props.src === `${secondCard.image}/high.webp`))
+  assert.ok(picker.find(n => n.props?.cardId === secondCard.id && n.props.image === secondCard.image && n.props.decorative))
   picker.select(2); assert.equal(picker.pocket(2).props['aria-pressed'], true)
   picker.review()
   assert.equal(picker.button('Cancel').type, 'button')

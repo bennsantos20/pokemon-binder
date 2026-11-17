@@ -1,3 +1,4 @@
+import CardImage from './CardImage'
 import type { DragEvent, PointerEvent } from 'react'
 import type { BinderPage as BinderPageType } from '../types/PokemonCards'
 interface BinderPageProps {
@@ -49,7 +50,7 @@ function BinderPage({
               : 'Empty'
           }`
           const content = slot.card ? (
-            <img src={`${slot.card.image}/high.webp`} alt="" />
+            <CardImage cardId={slot.card.id} name={slot.card.name} image={slot.card.image} decorative />
           ) : (
             <div className="empty-pocket">
               {!isPreviewMode && (

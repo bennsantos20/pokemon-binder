@@ -163,3 +163,13 @@ test('picker exposes named modal semantics and directs focus through details, re
   assert.equal(ui.focused.at(-1), '.binder-collection-search')
   ui.back(); assert.equal(ui.focused.at(-1), '[data-picker-mode="collection"]')
 })
+
+
+test('picker displays details without optional set metadata but never submits an unusable placement', async () => {
+  const ui = picker(); ui.search('a'); ui.calls[0].resolve([card('a')]); await settle(); ui.render()
+  ui.choose('a'); ui.calls[1].resolve({ ...detail('a'), set: undefined }); await settle(); ui.render()
+  assert.ok(ui.text().includes('Set information is unavailable.'))
+  const place = ui.find(n => n.props?.className === 'binder-place-card-button')
+  assert.equal(place.props.disabled, true)
+  place.props.onClick(); assert.equal(ui.placed.length, 0)
+})

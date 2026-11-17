@@ -1,3 +1,4 @@
+import CardImage from './CardImage'
 import { useModalFocus } from '../hooks/useModalFocus'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createLatestRequest, isAbortError } from '../services/latestRequest'
@@ -285,12 +286,7 @@ function handlePlaceCollectionCard() {
       </button>
     <div className="binder-placement-content">
       <div className="binder-placement-card">
-        {selectedCard.image && (
-          <img
-            src={`${selectedCard.image}/high.webp`}
-            alt={selectedCard.name}
-          />
-        )}
+        <CardImage cardId={selectedCard.id} name={selectedCard.name} image={selectedCard.image} />
       </div>
         <div className="binder-placement-info">
           <p className="eyebrow">
@@ -329,12 +325,13 @@ function handlePlaceCollectionCard() {
               </button>
             ))}
           </div>
+          {!selectedCard.set && <p role="status">Set information is unavailable. Please reopen this card to try again before adding or placing it.</p>}
         <button
             className="binder-place-card-button"
             type="button"
-            disabled={!selectedVariant}
+            disabled={!selectedVariant || !selectedCard.set}
             onClick={() => {
-                if (selectedVariant) {
+                if (selectedVariant && selectedCard.set) {
                     onPlaceCard(selectedCard, selectedVariant)
                 }
             }}
@@ -431,16 +428,7 @@ function handlePlaceCollectionCard() {
         onClick={() => { lastResultId.current = card.id; handleCardSelect(card) }}
         aria-busy={isLoadingCard}
       >
-        {card.image ? (
-          <img
-            src={`${card.image}/high.webp`}
-            alt={card.name}
-          />
-        ) : (
-          <div className="binder-search-image-placeholder">
-            No image
-          </div>
-        )}
+        <CardImage cardId={card.id} name={card.name} image={card.image} />
 
         <div className="binder-search-result-info">
           <strong>{card.name}</strong>
@@ -591,17 +579,7 @@ function handlePlaceCollectionCard() {
     onClick={() => setSelectedCollectionCard(card)}
     aria-pressed={selectedCollectionCard?.id === card.id}
   >
-      {card.image ? (
-        <img
-          src={`${card.image}/high.webp`}
-          alt={card.name}
-          loading="lazy"
-        />
-      ) : (
-        <div className="binder-collection-no-image">
-          No image
-        </div>
-      )}
+      <CardImage cardId={card.id} name={card.name} image={card.image} loading="lazy" />
 
       <strong>{card.name}</strong>
 

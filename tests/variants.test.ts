@@ -47,10 +47,10 @@ test('labels distinguish subtype, stamps, foil and languages and fall back to re
   assert.equal(variantOptionLabel(UNSPECIFIED_VARIANT, [UNSPECIFIED_VARIANT]), 'Printing Unspecified')
 })
 
-function modal(raw: unknown) {
+function modal(raw: unknown, set: unknown = { id: 'set', name: 'Set' }) {
   let states: any[] = [], cursor = 0, tree: any
   const added: any[] = []
-  let card: any = { id: 'a', name: 'A', localId: '1', variants_detailed: raw }
+  let card: any = { id: 'a', name: 'A', localId: '1', set, variants_detailed: raw }
   function execute(file: string) {
     const exports: Record<string, any> = {}
     runInNewContext(transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ModuleKind.CommonJS, jsx: JsxEmit.ReactJSX } }).outputText, {
@@ -112,4 +112,14 @@ test('unspecified cards round-trip through current storage/backup formats withou
   assert.equal(JSON.parse(map.get(storageKeys.binder)!)[0].slots[0].card.variant.variantId, UNSPECIFIED_VARIANT.variantId)
   resolveVariants([confirmed])
   assert.equal(owned.variant.variantId, UNSPECIFIED_VARIANT.variantId)
+})
+
+
+test('details with unavailable set metadata remain viewable and explain why adding is unavailable', () => {
+  const ui = modal([confirmed], null)
+  assert.ok(ui.text().includes('Set information is unavailable.'))
+  const add = ui.find(n => n.props?.className === 'confirm-add-button')
+  assert.equal(add.props.disabled, true)
+  add.props.onClick()
+  assert.equal(ui.added.length, 0)
 })

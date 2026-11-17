@@ -1,3 +1,4 @@
+import CardImage from './CardImage'
 import AccessibleDialog from './AccessibleDialog'
 import { useModalFocus } from '../hooks/useModalFocus'
 
@@ -277,14 +278,11 @@ function changePage(direction: number) {
                   : `Pocket ${index + 1}: Empty`
               }
             >
-              {slot.card?.image ? (
-                <img
-                  src={`${slot.card.image}/high.webp`}
-                  alt=""
-                />
+              {slot.card ? (
+                <CardImage cardId={slot.card.id} name={slot.card.name} image={slot.card.image} decorative />
               ) : (
                 <span className="collection-placement-empty">
-                  {slot.card ? slot.card.name : '+'}
+                  +
                 </span>
               )}
 

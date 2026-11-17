@@ -1,3 +1,4 @@
+import CardImage from './CardImage'
 import type { BinderPage as BinderPageType } from '../types/PokemonCards'
 import BinderPage from './BinderPage'
 import { useEffect, useRef, useState } from 'react'
@@ -51,6 +52,8 @@ function BinderSpread({
   const [edgeDirection, setEdgeDirection] = useState<'left' | 'right' | null>(null)
   const [floatingCard, setFloatingCard] = useState<{
     image?: string
+    cardId: string
+    name: string
     x: number
     y: number
   } | null>(null)
@@ -74,7 +77,8 @@ function BinderSpread({
     activeDrag.current = { slotId, pointerId: event.pointerId }
     suppressClick.current = true
     touchStart.current = null
-    setFloatingCard({ image, x: event.clientX, y: event.clientY })
+    const card = [leftPage, rightPage].flatMap(page => page?.slots ?? []).find(slot => slot.id === slotId)?.card
+    setFloatingCard({ image, cardId: card?.id ?? slotId, name: card?.name ?? 'Pokémon card', x: event.clientX, y: event.clientY })
     updateEdgeDirection(event.clientX, event.clientY)
   }
 
@@ -191,10 +195,9 @@ function BinderSpread({
         )}
       </div>
 
-      {floatingCard?.image && (
-        <img
-          src={`${floatingCard.image}/high.webp`}
-          alt="Dragging Pokémon card"
+      {floatingCard && (
+        <CardImage
+          cardId={floatingCard.cardId} name={floatingCard.name} image={floatingCard.image} decorative
           className="binder-floating-card"
           style={{ left: floatingCard.x, top: floatingCard.y }}
           draggable={false}
