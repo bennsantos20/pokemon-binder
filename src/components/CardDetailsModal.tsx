@@ -1,3 +1,4 @@
+import { useModalFocus } from '../hooks/useModalFocus'
 import { useState } from 'react'
 import { resolveVariants, variantOptionLabel, VARIANTS_UNAVAILABLE_MESSAGE } from '../services/variants'
 import type {
@@ -25,10 +26,17 @@ function CardDetailsModal({
   const [selectedVariant, setSelectedVariant] =
     useState<CardVariant | null>(initialSelection)
 
+  const modalRef = useModalFocus(onClose)
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <section
         className="card-modal"
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Card details for ${card.name}`}
+        tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
         <button

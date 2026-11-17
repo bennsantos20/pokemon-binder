@@ -1,3 +1,4 @@
+import { useModalFocus } from '../hooks/useModalFocus'
 
 import type { BinderCard } from '../types/PokemonCards'
 import { Eye, RefreshCw, LibraryBig, Trash2 } from 'lucide-react'
@@ -25,10 +26,14 @@ function BinderCardActions({
   onAddToCollection,
   onRemove,
 }: BinderCardActionsProps) {
+  const modalRef = useModalFocus(onClose)
+
   return (
     <div className="binder-actions-overlay" onClick={onClose}>
       <div
         className="binder-actions-modal"
+        ref={modalRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={`Actions for ${card.name}`}

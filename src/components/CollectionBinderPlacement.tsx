@@ -1,3 +1,5 @@
+import AccessibleDialog from './AccessibleDialog'
+import { useModalFocus } from '../hooks/useModalFocus'
 
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -30,8 +32,17 @@ function CollectionBinderPlacement({
   const [pageSearch, setPageSearch] = useState('')
     const pageMenuRef = useRef<HTMLDivElement>(null)
     const pageSearchRef = useRef<HTMLInputElement>(null)
+    const pageTriggerRef = useRef<HTMLButtonElement>(null)
+  const modalRef = useModalFocus(() => {
+    if (isPageMenuOpen) {
+      setIsPageMenuOpen(false)
+      setPageSearch('')
+      pageTriggerRef.current?.focus()
+    } else onClose()
+  })
 
 function goToPage(index: number) {
+  pageTriggerRef.current?.focus()
   setPageIndex(index)
   setSelectedSlotId(null)
   setIsReplaceConfirmOpen(false)
@@ -64,19 +75,10 @@ useEffect(() => {
     }
   }
 
-  function handleKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      setIsPageMenuOpen(false)
-      setPageSearch('')
-    }
-  }
-
   document.addEventListener('pointerdown', handlePointerDown)
-  document.addEventListener('keydown', handleKeyDown)
 
   return () => {
     document.removeEventListener('pointerdown', handlePointerDown)
-    document.removeEventListener('keydown', handleKeyDown)
   }
 }, [isPageMenuOpen])
 
@@ -111,6 +113,8 @@ function changePage(direction: number) {
     >
       <div
         className="collection-placement-modal"
+        ref={modalRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={`Place ${card.name} in binder`}
@@ -148,11 +152,12 @@ function changePage(direction: number) {
             >
             <button
                 type="button"
+                ref={pageTriggerRef}
                 className={`collection-placement-page-trigger ${
                 isPageMenuOpen ? 'open' : ''
                 }`}
                 aria-expanded={isPageMenuOpen}
-                aria-haspopup="listbox"
+                aria-controls="collection-placement-page-menu"
                 onClick={() => setIsPageMenuOpen((current) => !current)}
             >
                 <span className="collection-placement-page-trigger-label">
@@ -171,7 +176,7 @@ function changePage(direction: number) {
             </button>
 
             {isPageMenuOpen && (
-                <div className="collection-placement-page-menu">
+                <div id="collection-placement-page-menu" className="collection-placement-page-menu">
                 <div className="collection-placement-page-search">
                     <Search size={16} />
                     <input
@@ -264,10 +269,16 @@ function changePage(direction: number) {
         </div>
 
           {isReplaceConfirmOpen && selectedSlot?.card && (
-            <div className="collection-placement-confirm">
+            <AccessibleDialog
+              className="collection-placement-confirm"
+              role="alertdialog"
+              aria-label="Replace this card?"
+              aria-describedby="collection-placement-confirm-description"
+              onClose={() => setIsReplaceConfirmOpen(false)}
+            >
               <h3>Replace this card?</h3>
 
-              <p>
+              <p id="collection-placement-confirm-description">
                 You're about to replace{' '}
                 <strong>{selectedSlot.card.name}</strong> with{' '}
                 <strong>{card.name}</strong> on Page {page.pageNumber}.
@@ -295,7 +306,7 @@ function changePage(direction: number) {
                   Confirm Replacement
                 </button>
               </div>
-            </div>
+            </AccessibleDialog>
           )}
 
         <div className="collection-placement-footer">

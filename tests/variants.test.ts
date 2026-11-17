@@ -55,6 +55,10 @@ function modal(raw: unknown) {
     const exports: Record<string, any> = {}
     runInNewContext(transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ModuleKind.CommonJS, jsx: JsxEmit.ReactJSX } }).outputText, {
       exports, require(name: string) {
+        if (name === '../hooks/useModalFocus') return { useModalFocus: (onClose: () => void) => {
+          void onClose
+          return { current: null }
+        } }
         if (name === '../services/variants') return execute('src/services/variants.ts')
         if (name === 'react') return { useState(initial: any) { const index = cursor++; if (!(index in states)) states[index] = initial; return [states[index], (value: any) => { states[index] = value }] } }
         if (name === 'react/jsx-runtime') return { jsx: (type: any, props: any) => ({ type, props }), jsxs: (type: any, props: any) => ({ type, props }) }

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useModalFocus } from '../hooks/useModalFocus'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { OwnedCard } from '../types/PokemonCards'
 import {
   Eye,
@@ -38,6 +39,15 @@ function CollectionCardActions({
     const [isEditingQuantity, setIsEditingQuantity] = useState(false)
     const [quantity, setQuantity] = useState(card.quantity)
 
+  const modalRef = useModalFocus(onClose)
+  const previousEditing = useRef(isEditingQuantity)
+  useLayoutEffect(() => {
+    if (previousEditing.current === isEditingQuantity) return
+    previousEditing.current = isEditingQuantity
+    modalRef.current?.querySelector<HTMLElement>(isEditingQuantity
+      ? '.collection-quantity-editor button:not(:disabled)' : '[data-manage-quantity]')?.focus()
+  }, [isEditingQuantity, modalRef])
+
   return (
     <div
       className="collection-actions-overlay"
@@ -45,6 +55,8 @@ function CollectionCardActions({
     >
       <div
         className="collection-actions-modal"
+        ref={modalRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={`Manage ${card.name}`}
@@ -140,6 +152,7 @@ function CollectionCardActions({
 ) : (
     <button
       type="button"
+      data-manage-quantity
       onClick={() => { onCancelDetails?.(); setIsEditingQuantity(true) }}
       >
         <SlidersHorizontal size={18} strokeWidth={1.8} />

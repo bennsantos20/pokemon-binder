@@ -17,6 +17,14 @@ const detail = (id: string) => ({ ...card(id), set: { id: 'set', name: 'Set' }, 
 function picker() {
   const states: any[] = [], effects: Array<() => unknown> = [], listeners = new Map<string, (e: any) => void>()
   let cursor = 0, first = true, tree: any, closed = 0
+  let layoutEffects: Array<() => void> = []
+  const focused: string[] = []
+  const modalRef = { current: {
+    querySelector: (selector: string) => ({ focus: () => focused.push(selector) }),
+    querySelectorAll: () => nodes(tree).filter(n => n.props?.['data-card-id']).map(n => ({
+      dataset: { cardId: n.props['data-card-id'] }, focus: () => focused.push(`result:${n.props['data-card-id']}`),
+    })),
+  } }
   const placed: any[] = []
   const calls: Array<{ signal: AbortSignal; query: string; kind: string } & ReturnType<typeof deferred>> = []
   const fetch = (kind: string) => (query: string, signal: AbortSignal) => {
@@ -28,12 +36,18 @@ function picker() {
       exports, AbortController,
       document: { addEventListener: (name: string, fn: any) => listeners.set(name, fn), removeEventListener: (name: string) => listeners.delete(name) },
       require(name: string) {
+        if (name === '../hooks/useModalFocus') return { useModalFocus: (onClose: () => void) => {
+          listeners.set('keydown', (event: any) => { if (event.key === 'Escape') onClose() })
+          return modalRef
+        } }
         if (name === '../services/latestRequest') return execute('src/services/latestRequest.ts')
         if (name === '../services/variants') return execute('src/services/variants.ts')
         if (name === '../services/tcgdex') return { searchCards: fetch('search'), getCardById: fetch('detail') }
         if (name === 'react') return {
           useState(initial: any) { const index = cursor++; if (first) states[index] = typeof initial === 'function' ? initial() : initial;
             return [states[index], (next: any) => { states[index] = typeof next === 'function' ? next(states[index]) : next }] },
+          useRef(initial: any) { const index = cursor++; if (first) states[index] = { current: initial }; return states[index] },
+          useLayoutEffect(fn: () => void) { layoutEffects.push(fn) },
           useEffect(fn: () => unknown) { if (first) effects.push(fn) }, useEffectEvent: (fn: any) => fn,
         }
         if (name === 'react/jsx-runtime') return { jsx: (type: any, props: any, key: any) => ({ type, props, key }), jsxs: (type: any, props: any, key: any) => ({ type, props, key }) }
@@ -43,7 +57,7 @@ function picker() {
     return exports
   }
   const Component = execute('src/components/BinderCardPicker.tsx').default
-  function render() { cursor = 0; tree = Component({ slotId: 'page-1-slot-1', collection: [], onClose: () => closed++, onPlaceCard: (...args: any[]) => placed.push(args) }); first = false }
+  function render() { cursor = 0; layoutEffects = []; tree = Component({ slotId: 'page-1-slot-1', collection: [], onClose: () => closed++, onPlaceCard: (...args: any[]) => placed.push(args) }); first = false; layoutEffects.forEach(fn => fn()) }
   function nodes(v: any): any[] { if (!v || typeof v !== 'object') return []; if (Array.isArray(v)) return v.flatMap(nodes); return [v, ...nodes(v.props?.children)] }
   const find = (fn: (n: any) => boolean) => nodes(tree).find(fn)
   function content(v: any): string { if (v == null || typeof v === 'boolean') return ''; if (Array.isArray(v)) return v.map(content).join(''); return typeof v === 'object' ? content(v.props?.children) : String(v) }
@@ -54,7 +68,7 @@ function picker() {
   }
   function choose(id: string) { find(n => n.props?.className === 'binder-search-result' && n.key === id).props.onClick(); render() }
   render(); const cleanups = effects.map(fn => fn()); open()
-  return { render, calls, find, search, choose, open, placed, closed: () => closed, text: () => content(tree),
+  return { render, calls, find, search, choose, open, placed, focused, closed: () => closed, text: () => content(tree),
     results: () => nodes(tree).filter(n => n.props?.className === 'binder-search-result').map(n => n.key),
     back: () => { find(n => n.props?.className === 'binder-picker-back').props.onClick(); render() },
     close: () => { find(n => n.props?.className === 'binder-picker-close').props.onClick(); render() },
@@ -130,4 +144,22 @@ test('picker safely offers unselected Printing Unspecified for all unusable meta
     ui.back(); ui.choose('a'); ui.calls[2].resolve({ ...detail('a'), variants_detailed: metadata }); await settle(); ui.render()
     assert.equal(ui.find(n => n.props?.className === 'binder-place-card-button').props.disabled, true)
   }
+})
+
+
+test('picker exposes named modal semantics and directs focus through details, results and mode changes', async () => {
+  const ui = picker()
+  const dialog = ui.find(n => n.props?.role === 'dialog')
+  assert.equal(dialog.props['aria-label'], 'Add a card to binder')
+  assert.equal(dialog.props['aria-modal'], 'true')
+  assert.equal(dialog.props.tabIndex, -1)
+  assert.equal(ui.focused.at(-1), '[aria-label="Search all Pokémon cards"]')
+  ui.search('cards'); ui.calls[0].resolve([card('a')]); await settle(); ui.render()
+  ui.choose('a'); ui.calls[1].resolve(detail('a')); await settle(); ui.render()
+  assert.equal(ui.focused.at(-1), '.binder-picker-back')
+  ui.back(); assert.equal(ui.focused.at(-1), 'result:a')
+  ui.back(); assert.equal(ui.focused.at(-1), '[data-picker-mode="search"]')
+  ui.find(n => n.props?.['data-picker-mode'] === 'collection').props.onClick(); ui.render()
+  assert.equal(ui.focused.at(-1), '.binder-collection-search')
+  ui.back(); assert.equal(ui.focused.at(-1), '[data-picker-mode="collection"]')
 })

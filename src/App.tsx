@@ -1,3 +1,4 @@
+import AccessibleDialog from './components/AccessibleDialog'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { searchCards, getCardById } from './services/tcgdex'
 import { createLatestRequest, isAbortError } from './services/latestRequest'
@@ -565,22 +566,6 @@ useEffect(() => {
 }, [isPageNavigatorOpen])
 
 
-useEffect(() => {
-  if (renamingPageNumber === null) return
-
-  function handleRenameEscape(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      setRenamingPageNumber(null)
-      setRenamePageValue('')
-    }
-  }
-
-  document.addEventListener('keydown', handleRenameEscape)
-
-  return () => {
-    document.removeEventListener('keydown', handleRenameEscape)
-  }
-}, [renamingPageNumber])
 
 
 useEffect(() => {
@@ -591,28 +576,6 @@ useEffect(() => {
 }, [binderPages, savedData, backupBusy])
 
 
-useEffect(() => {
-  if (!isRemoveCollectionConfirmOpen) return
-
-  function handleRemoveConfirmationEscape(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      event.stopImmediatePropagation()
-      handleCancelRemoveFromCollection()
-    }
-  }
-
-  document.addEventListener(
-    'keydown',
-    handleRemoveConfirmationEscape
-  )
-
-  return () => {
-    document.removeEventListener(
-      'keydown',
-      handleRemoveConfirmationEscape
-    )
-  }
-}, [isRemoveCollectionConfirmOpen])
 
 
 useEffect(() => {
@@ -900,6 +863,8 @@ const hasMoreMainCollectionCards =
 
 return (
   <main
+    tabIndex={-1}
+    data-dialog-fallback
     className={`app ${isPreviewMode ? 'app-preview' : ''} ${
       isFullscreen ? 'app-fullscreen' : ''
     }`}
@@ -1640,7 +1605,8 @@ return (
     className="binder-locations-overlay"
     onClick={() => setSelectedBinderLocations(null)}
   >
-    <div
+    <AccessibleDialog
+      onClose={() => setSelectedBinderLocations(null)}
       className="binder-locations-modal"
       role="dialog"
       aria-modal="true"
@@ -1677,7 +1643,7 @@ return (
           </button>
         ))}
       </div>
-    </div>
+    </AccessibleDialog>
   </div>
 )}
 
@@ -1687,7 +1653,9 @@ return (
     className="rename-page-overlay"
     onClick={handleCancelBinderPageRename}
   >
-    <div
+    <AccessibleDialog
+      onClose={handleCancelBinderPageRename}
+      initialFocus="#binder-page-name-input"
       className="rename-page-modal"
       role="dialog"
       aria-modal="true"
@@ -1745,7 +1713,6 @@ return (
           onChange={(event) => setRenamePageValue(event.target.value)}
           maxLength={40}
           placeholder="e.g. Johto Favorites"
-          autoFocus
         />
 
         <p className="rename-page-hint">
@@ -1770,7 +1737,7 @@ return (
           </button>
         </div>
       </form>
-    </div>
+    </AccessibleDialog>
   </div>
 )}
 
@@ -1780,7 +1747,9 @@ return (
     className="remove-collection-overlay"
     onClick={handleCancelRemoveFromCollection}
   >
-    <div
+    <AccessibleDialog
+      onClose={handleCancelRemoveFromCollection}
+      initialFocus=".remove-collection-cancel"
       className="remove-collection-modal"
       role="alertdialog"
       aria-modal="true"
@@ -1860,7 +1829,7 @@ return (
           Remove Card
         </button>
       </div>
-    </div>
+    </AccessibleDialog>
   </div>
 )}
 

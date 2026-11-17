@@ -1,4 +1,5 @@
-import { useEffect, useEffectEvent, useState } from 'react'
+import { useModalFocus } from '../hooks/useModalFocus'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createLatestRequest, isAbortError } from '../services/latestRequest'
 import { resolveVariants, variantOptionLabel, VARIANTS_UNAVAILABLE_MESSAGE } from '../services/variants'
 import { 
@@ -68,14 +69,25 @@ function BinderCardPicker({
     setSearchError(null); setDetailError(null)
   }
   function closePicker() { cancelRequests(); onClose() }
-  const escapeClose = useEffectEvent(closePicker)
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') escapeClose() }
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('keydown', onKeyDown)
-      searchRequests.cancel(); detailRequests.cancel()
-    }
+  const modalRef = useModalFocus(closePicker, '.binder-picker-option')
+  const lastResultId = useRef<string | null>(null)
+  const previousScreen = useRef({ view, card: selectedCard?.id })
+  useLayoutEffect(() => {
+    const previous = previousScreen.current
+    previousScreen.current = { view, card: selectedCard?.id }
+    if (previous.view === view && previous.card === selectedCard?.id) return
+    const modal = modalRef.current
+    if (!modal) return
+    let target: HTMLElement | null | undefined
+    if (selectedCard?.id) target = modal.querySelector('.binder-picker-back')
+    else if (view === 'options') target = modal.querySelector(`[data-picker-mode="${previous.view}"]`)
+    else if (previous.card) target = Array.from(modal.querySelectorAll<HTMLElement>('[data-card-id]'))
+      .find(element => element.dataset.cardId === lastResultId.current)
+    target ??= modal.querySelector(view === 'collection' ? '.binder-collection-search' : '[aria-label="Search all Pokémon cards"]')
+    target?.focus()
+  }, [view, selectedCard, modalRef])
+  useEffect(() => () => {
+    searchRequests.cancel(); detailRequests.cancel()
   }, [searchRequests, detailRequests])
 
   function backToOptions() {
@@ -192,6 +204,8 @@ function handlePlaceCollectionCard() {
     >
       <section
         className="binder-card-picker"
+        ref={modalRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label="Add a card to binder"
@@ -223,6 +237,7 @@ function handlePlaceCollectionCard() {
           <button
             className="binder-picker-option"
             type="button"
+            data-picker-mode="search"
             onClick={() => setView('search')}
           >
             <span className="binder-picker-option-icon">
@@ -239,6 +254,7 @@ function handlePlaceCollectionCard() {
           <button
             className="binder-picker-option"
             type="button"
+            data-picker-mode="collection"
             onClick={() => setView('collection')}
           >
             <span className="binder-picker-option-icon">
@@ -356,7 +372,6 @@ function handlePlaceCollectionCard() {
     onChange={(event) => setSearchTerm(event.target.value)}
     placeholder="Search Pokémon cards..."
     aria-label="Search all Pokémon cards"
-    autoFocus
   />
 
   <button
@@ -412,7 +427,8 @@ function handlePlaceCollectionCard() {
         className="binder-search-result"
         type="button"
         key={card.id}
-        onClick={() => handleCardSelect(card)}
+        data-card-id={card.id}
+        onClick={() => { lastResultId.current = card.id; handleCardSelect(card) }}
         aria-busy={isLoadingCard}
       >
         {card.image ? (
@@ -462,6 +478,7 @@ function handlePlaceCollectionCard() {
     setVisibleCollectionCount(COLLECTION_PAGE_SIZE)
   }}
   placeholder="Search your collection..."
+  aria-label="Search your collection"
   className="binder-collection-search"
 />
 

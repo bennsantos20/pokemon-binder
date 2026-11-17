@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 import { transpileModule, ModuleKind, JsxEmit } from 'typescript'
+import * as variants from '../src/services/variants.ts'
 import { createBinderPage } from '../src/services/storage.ts'
 
 // Inspect rendered JSX and exercise existing callbacks without adding a DOM dependency.
@@ -16,13 +17,18 @@ function component(file: string, props: any) {
     exports,
     MouseEvent: class {},
     require(name: string) {
+        if (name === '../services/variants') return variants
+        if (name === '../hooks/useModalFocus') return { useModalFocus: (onClose: () => void) => {
+          void onClose
+          return { current: null }
+        } }
       if (name === 'react') return {
         useState(initial: any) {
           const index = cursor++
           if (!(index in states)) states[index] = initial
           return [states[index], (next: any) => { states[index] = typeof next === 'function' ? next(states[index]) : next }]
         },
-        useRef: () => ({ current: null }), useEffect() {},
+        useRef: (value: any) => ({ current: value }), useEffect() {}, useLayoutEffect() {},
       }
       if (name === 'react/jsx-runtime') return {
         jsx: (type: any, props: any, key: any) => ({ type, props, key }),
@@ -126,4 +132,21 @@ test('Preview pockets retain content and styling but have no interactive semanti
   assert.equal(ui.pockets()[2].props.children.props.className, 'empty-pocket')
   assert.equal(ui.pockets()[2].props.children.props.children, false)
   assert.deepEqual(ui.calls, [])
+})
+
+
+test('card, action and placement dialogs expose names, modal semantics and a programmatic focus target', () => {
+  for (const [name, props, label] of [
+    ['CardDetailsModal', { card: { ...card, id: card.cardId }, onClose() {} }, 'Card details for Pikachu'],
+    ['BinderCardActions', { card, isOwned: true, onClose() {} }, 'Actions for Pikachu'],
+    ['CollectionCardActions', { card, onClose() {} }, 'Manage Pikachu'],
+    ['CollectionBinderPlacement', { card, pages: [createBinderPage(1)], onClose() {} }, 'Place Pikachu in binder'],
+  ] as const) {
+    const ui = component(name, props)
+    const dialog = ui.find(n => n.props?.role === 'dialog')
+    assert.equal(dialog.props['aria-label'], label)
+    assert.equal(dialog.props['aria-modal'], 'true')
+    assert.equal(dialog.props.tabIndex, -1)
+    assert.ok(dialog.props.ref)
+  }
 })
