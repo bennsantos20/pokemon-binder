@@ -1,7 +1,7 @@
 import { useModalFocus } from '../hooks/useModalFocus'
 
 import type { BinderCard } from '../types/PokemonCards'
-import { Eye, RefreshCw, LibraryBig, Trash2 } from 'lucide-react'
+import { Eye, RefreshCw, LibraryBig, Trash2, ArrowRightLeft } from 'lucide-react'
 
 interface BinderCardActionsProps {
   card: BinderCard
@@ -10,6 +10,7 @@ interface BinderCardActionsProps {
   detailsLoading?: boolean
   detailsError?: string | null
   onViewDetails: () => void
+  onMove: () => void
   onReplace: () => void
   onAddToCollection: () => void
   onRemove: () => void
@@ -22,6 +23,7 @@ function BinderCardActions({
   onViewDetails,
   detailsLoading = false,
   detailsError,
+  onMove,
   onReplace,
   onAddToCollection,
   onRemove,
@@ -80,6 +82,11 @@ function BinderCardActions({
       <button type="button" onClick={onViewDetails} aria-busy={detailsLoading}>
         <Eye size={18} strokeWidth={1.8} />
         <span>View Card Details</span>
+      </button>
+
+      <button type="button" className="binder-actions-move" onClick={onMove}>
+        <ArrowRightLeft size={18} strokeWidth={1.8} aria-hidden="true" />
+        <span>Move / Swap Card</span>
       </button>
 
       <button type="button" onClick={onReplace}>

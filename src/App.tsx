@@ -155,6 +155,7 @@ const [renamePageValue, setRenamePageValue] =
 
   const [draggedSlotId, setDraggedSlotId] =
   useState<string | null>(null)
+  const [moveSource, setMoveSource] = useState<{ slotId: string; card: BinderCard } | null>(null)
   const [isPreviewMode, setIsPreviewMode] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -396,7 +397,8 @@ function handleBinderDragStart(slotId: string) {
 
 function handleBinderDrop(
   targetSlotId: string,
-  sourceSlotId: string | null = draggedSlotId
+  sourceSlotId: string | null = draggedSlotId,
+  expected?: { sourceCard: BinderCard; targetCard: BinderCard | null; targetPageNumber: number }
 ) {
   if (!sourceSlotId || sourceSlotId === targetSlotId) {
     setDraggedSlotId(null)
@@ -414,7 +416,10 @@ function handleBinderDrop(
       (slot) => slot.id === targetSlotId
     )
 
-    if (!sourceSlot?.card || !targetSlot) {
+    if (!sourceSlot?.card || !targetSlot || (expected && (
+      sourceSlot.card !== expected.sourceCard || targetSlot.card !== expected.targetCard ||
+      !currentPages.some(page => page.pageNumber === expected.targetPageNumber && page.slots.includes(targetSlot))
+    ))) {
       return currentPages
     }
 
@@ -438,6 +443,24 @@ function handleBinderDrop(
   })
 
   setDraggedSlotId(null)
+}
+
+function handleMoveDestination(pageNumber: number, slotId: string, expectedTarget?: BinderCard | null) {
+  if (!moveSource || slotId === moveSource.slotId || expectedTarget === undefined) {
+    return 'Choose a different destination pocket and review it before confirming.'
+  }
+  const source = binderPages.flatMap(page => page.slots).find(slot => slot.id === moveSource.slotId)
+  const destination = binderPages.find(page => page.pageNumber === pageNumber)?.slots.find(slot => slot.id === slotId)
+  if (!source?.card || source.card !== moveSource.card) {
+    return 'The source card changed or is no longer available. Close this dialog and select the card again.'
+  }
+  if (!destination || destination.card !== expectedTarget) {
+    return 'The destination changed or is no longer available. Cancel this confirmation and review the pockets again.'
+  }
+  handleBinderDrop(slotId, moveSource.slotId, {
+    sourceCard: moveSource.card, targetCard: expectedTarget, targetPageNumber: pageNumber,
+  })
+  setMoveSource(null)
 }
 
 function handlePlaceCardInBinder(
@@ -1554,6 +1577,12 @@ return (
         onViewDetails={handleViewBinderCardDetails}
         detailsLoading={detailSource === 'binder' && isLoadingDetails}
         detailsError={detailSource === 'binder' ? detailError : null}
+        onMove={() => {
+          dismissCardDetails()
+          if (!selectedOccupiedSlotId || !selectedOccupiedSlot.card) return
+          setMoveSource({ slotId: selectedOccupiedSlotId, card: selectedOccupiedSlot.card })
+          setSelectedOccupiedSlotId(null)
+        }}
         onReplace={() => {
           dismissCardDetails()
           setSelectedSlotId(selectedOccupiedSlotId)
@@ -1561,6 +1590,17 @@ return (
         }}
         onAddToCollection={handleAddBinderCardToCollection}
         onRemove={handleRemoveCardFromBinder}
+      />
+    )}
+
+    {moveSource && (
+      <CollectionBinderPlacement
+        key={moveSource.slotId}
+        card={moveSource.card}
+        pages={binderPages}
+        moveSourceSlotId={moveSource.slotId}
+        onClose={() => setMoveSource(null)}
+        onSelectPocket={handleMoveDestination}
       />
     )}
 

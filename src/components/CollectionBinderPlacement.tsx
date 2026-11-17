@@ -10,13 +10,14 @@ import {
   Search,
   X,
 } from 'lucide-react'
-import type { BinderPage, OwnedCard } from '../types/PokemonCards'
+import type { BinderCard, BinderPage } from '../types/PokemonCards'
 
 interface CollectionBinderPlacementProps {
-  card: OwnedCard
+  card: BinderCard
   pages: BinderPage[]
   onClose: () => void
-  onSelectPocket: (pageNumber: number, slotId: string) => void
+  onSelectPocket: (pageNumber: number, slotId: string, expectedTarget?: BinderCard | null) => void | string
+  moveSourceSlotId?: string
 }
 
 function CollectionBinderPlacement({
@@ -24,12 +25,22 @@ function CollectionBinderPlacement({
   pages,
   onClose,
   onSelectPocket,
+  moveSourceSlotId,
 }: CollectionBinderPlacementProps) {
-  const [pageIndex, setPageIndex] = useState(0)
+  const [pageIndex, setPageIndex] = useState(Math.max(0, pages.findIndex(page => page.slots.some(slot => slot.id === moveSourceSlotId))))
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
   const [isPageMenuOpen, setIsPageMenuOpen] = useState(false)
   const [isReplaceConfirmOpen, setIsReplaceConfirmOpen] = useState(false)
   const [pageSearch, setPageSearch] = useState('')
+  const [moveDestination, setMoveDestination] = useState<{
+    pageNumber: number; slotId: string; pocketNumber: number; card: BinderCard | null
+  } | null>(null)
+  const [moveError, setMoveError] = useState<string | null>(null)
+  const isMoving = moveSourceSlotId !== undefined
+  const sourcePage = pages.find(page => page.slots.some(slot => slot.id === moveSourceSlotId))
+  const sourcePocketNumber = sourcePage ? sourcePage.slots.findIndex(slot => slot.id === moveSourceSlotId) + 1 : null
+  const sourceLocation = sourcePage ? `Page ${sourcePage.pageNumber}, pocket ${sourcePocketNumber}` : 'the original pocket'
+
     const pageMenuRef = useRef<HTMLDivElement>(null)
     const pageSearchRef = useRef<HTMLInputElement>(null)
     const pageTriggerRef = useRef<HTMLButtonElement>(null)
@@ -61,6 +72,14 @@ const filteredPages = pages
       (binderPage.name ?? '').toLowerCase().includes(search)
     )
   })
+
+useEffect(() => {
+  if (moveDestination) {
+    modalRef.current?.querySelector('[aria-describedby="binder-move-description"]')?.scrollIntoView({
+      block: 'nearest', behavior: 'instant',
+    })
+  }
+}, [moveDestination, modalRef])
 
 useEffect(() => {
   if (!isPageMenuOpen) return
@@ -117,7 +136,7 @@ function changePage(direction: number) {
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-label={`Place ${card.name} in binder`}
+        aria-label={isMoving ? `Move or swap ${card.name}` : `Place ${card.name} in binder`}
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -130,10 +149,12 @@ function changePage(direction: number) {
         </button>
 
         <p className="eyebrow">BINDER DESIGNER</p>
-        <h2>Add to Binder</h2>
+        <h2>{isMoving ? 'Move / Swap Card' : 'Add to Binder'}</h2>
 
         <p className="collection-placement-description">
-          Choose where to place {card.name}.
+          {isMoving
+            ? `Choose a destination for ${card.name} (${card.variant.type}) from ${sourceLocation}. Empty pockets move the card; occupied pockets swap both cards.`
+            : `Choose where to place ${card.name}.`}
         </p>
 
         <div className="collection-placement-navigation">
@@ -240,7 +261,12 @@ function changePage(direction: number) {
               className={`collection-placement-pocket ${
                 selectedSlotId === slot.id ? 'selected' : ''
               }`}
+              disabled={slot.id === moveSourceSlotId}
+              aria-pressed={selectedSlotId === slot.id}
+              aria-label={`Page ${page.pageNumber}, pocket ${index + 1}: ${slot.card
+                ? `Occupied by ${slot.card.name} (${slot.card.variant.type})` : 'Empty'}${slot.id === moveSourceSlotId ? ', original pocket, unavailable as destination' : ''}`}
               onClick={() => {
+                if (slot.id === moveSourceSlotId) return
                 setSelectedSlotId(slot.id)
                 setIsReplaceConfirmOpen(false)
               }}
@@ -253,7 +279,7 @@ function changePage(direction: number) {
               {slot.card?.image ? (
                 <img
                   src={`${slot.card.image}/high.webp`}
-                  alt={slot.card.name}
+                  alt=""
                 />
               ) : (
                 <span className="collection-placement-empty">
@@ -262,7 +288,7 @@ function changePage(direction: number) {
               )}
 
               <span className="collection-placement-pocket-number">
-                {index + 1}
+                {index + 1}{slot.id === moveSourceSlotId && ' · Source'}
               </span>
             </button>
           ))}
@@ -309,6 +335,34 @@ function changePage(direction: number) {
             </AccessibleDialog>
           )}
 
+          {moveDestination && (
+            <AccessibleDialog
+              className="collection-placement-confirm"
+              role="alertdialog"
+              aria-label={moveDestination.card ? 'Swap these cards?' : 'Move this card?'}
+              aria-describedby="binder-move-description"
+              onClose={() => setMoveDestination(null)}
+            >
+              <h3>{moveDestination.card ? 'Swap these cards?' : 'Move this card?'}</h3>
+              <p id="binder-move-description">
+                {moveDestination.card
+                  ? `Swap ${card.name} (${card.set.name}, ${card.variant.type}) on ${sourceLocation} with ${moveDestination.card.name} (${moveDestination.card.set.name}, ${moveDestination.card.variant.type}) on Page ${moveDestination.pageNumber}, pocket ${moveDestination.pocketNumber}.`
+                  : `Move ${card.name} (${card.set.name}, ${card.variant.type}) from ${sourceLocation} to the empty pocket on Page ${moveDestination.pageNumber}, pocket ${moveDestination.pocketNumber}. The source pocket will become empty.`}
+              </p>
+              <p>Only binder placements change. Collection quantities stay the same.</p>
+              {moveError && <p role="alert">{moveError}</p>}
+              <div className="collection-placement-confirm-actions">
+                <button type="button" onClick={() => setMoveDestination(null)}>Cancel</button>
+                <button type="button" onClick={() => {
+                  const error = onSelectPocket(moveDestination.pageNumber, moveDestination.slotId, moveDestination.card)
+                  if (typeof error === 'string') setMoveError(error)
+                }}>
+                  {moveDestination.card ? 'Confirm Swap' : 'Confirm Move'}
+                </button>
+              </div>
+            </AccessibleDialog>
+          )}
+
         <div className="collection-placement-footer">
           {selectedSlot ? (
             <>
@@ -320,18 +374,23 @@ function changePage(direction: number) {
 
               <button
                 type="button"
-                disabled={isReplaceConfirmOpen}
+                disabled={isReplaceConfirmOpen || moveDestination !== null}
                 onClick={() => {
-                  if (selectedSlot.card) {
+                  if (isMoving) {
+                    if (selectedSlot.id === moveSourceSlotId) return
+                    setMoveError(null)
+                    setMoveDestination({ pageNumber: page.pageNumber, slotId: selectedSlot.id,
+                      pocketNumber: page.slots.indexOf(selectedSlot) + 1, card: selectedSlot.card })
+                  } else if (selectedSlot.card) {
                     setIsReplaceConfirmOpen(true)
                   } else {
                     onSelectPocket(page.pageNumber, selectedSlot.id)
                   }
                 }}
               >
-                {selectedSlot.card
-                  ? 'Replace Card'
-                  : 'Place Card Here'}
+                {isMoving
+                  ? selectedSlot.card ? 'Review Swap' : 'Review Move'
+                  : selectedSlot.card ? 'Replace Card' : 'Place Card Here'}
               </button>
             </>
           ) : (

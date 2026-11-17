@@ -4100,6 +4100,12 @@ button.collection-binder-indicator:focus-visible {
   box-shadow: 0 5px 13px rgba(35, 65, 40, 0.25);
 }
 
+.collection-placement-pocket:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
 .collection-placement-pocket.selected {
   border-color: #38784a;
   box-shadow: 0 0 0 3px rgba(55, 120, 75, 0.28),
