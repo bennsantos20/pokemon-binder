@@ -25,7 +25,7 @@ function appHarness(initial: Record<string, string> = {}) {
     const call = { kind, query, signal, ...deferred() }; calls.push(call); return call.promise
   }
   const storage = new Map<string, string>(Object.entries(initial))
-  const window = { localStorage: { getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value) },
+  const window = { addEventListener() {}, removeEventListener() {}, localStorage: { getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value) },
     matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }) }
   const execute = (file: string) => {
     const exports: Record<string, any> = {}
@@ -33,6 +33,7 @@ function appHarness(initial: Record<string, string> = {}) {
       exports, window, AbortController, document: { addEventListener() {}, removeEventListener() {} },
       require(name: string) {
         if (name === './services/accessibility') return execute('src/services/accessibility.ts')
+        if (name === './services/nativeBinderDrag') return execute('src/services/nativeBinderDrag.ts')
         if (name === './services/storage') return execute('src/services/storage.ts')
         if (name === './services/latestRequest') return execute('src/services/latestRequest.ts')
         if (name === './services/tcgdex') return { searchCards: request('search'), getCardById: request('detail') }

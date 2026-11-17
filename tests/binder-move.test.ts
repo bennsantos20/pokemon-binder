@@ -44,6 +44,7 @@ function app(initial: Record<string, string>) {
   const requests: AbortSignal[] = []
   const pendingEffects: Array<() => void> = []
   const window = {
+    addEventListener() {}, removeEventListener() {},
     localStorage: { getItem: (key: string) => data.get(key) ?? null, setItem: (key: string, value: string) => data.set(key, value) },
     matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
   }
@@ -53,6 +54,7 @@ function app(initial: Record<string, string>) {
       exports, window, AbortController, document: { addEventListener() {}, removeEventListener() {} },
       require(name: string) {
         if (name === './services/accessibility') return execute('src/services/accessibility.ts')
+        if (name === './services/nativeBinderDrag') return execute('src/services/nativeBinderDrag.ts')
         if (name === './services/storage') return execute('src/services/storage.ts')
         if (name === './services/latestRequest') return execute('src/services/latestRequest.ts')
         if (name === './services/tcgdex') return { getCardById: (_id: string, signal: AbortSignal) => {

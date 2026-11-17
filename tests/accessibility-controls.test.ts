@@ -104,14 +104,15 @@ test('editing pockets name page, position, occupancy and exact-printing ownershi
   assert.equal(pockets[0].props.children.props.alt, '')
   assert.equal(pockets[0].props.draggable, true)
   assert.equal(pockets[2].props.draggable, false)
-  pockets[0].props.onClick(); pockets[0].props.onDragStart(); pockets[1].props.onDrop()
+  const dragEvent = { preventDefault() {} }
+  pockets[0].props.onClick(); pockets[0].props.onDragStart(dragEvent); pockets[1].props.onDrop(dragEvent)
   let prevented = false
   pockets[1].props.onDragOver({ preventDefault() { prevented = true } })
   const event = { pointerType: 'touch' }
   pockets[0].props.onPointerDown(event)
   assert.equal(prevented, true)
   assert.deepEqual(ui.calls, [
-    ['click', 'page-4-slot-1'], ['drag', 'page-4-slot-1'], ['drop', 'page-4-slot-2'],
+    ['click', 'page-4-slot-1'], ['drag', 'page-4-slot-1', dragEvent], ['drop', 'page-4-slot-2', dragEvent],
     ['touch', event, 'page-4-slot-1', card.image],
   ])
 })

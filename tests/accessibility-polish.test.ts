@@ -132,6 +132,7 @@ function navigation(mobile: boolean) {
   const states: any[] = [], refs: any[] = [], data = new Map<string, string>()
   let cursor = 0, refCursor = 0, tree: any
   const window = {
+    addEventListener() {}, removeEventListener() {},
     localStorage: { getItem: (key: string) => data.get(key) ?? null, setItem: (key: string, value: string) => data.set(key, value) },
     matchMedia: () => ({ matches: mobile, addEventListener() {}, removeEventListener() {} }),
   }
@@ -141,6 +142,7 @@ function navigation(mobile: boolean) {
       exports, window, AbortController,
       require(name: string) {
         if (name === './services/accessibility') return { binderViewLabel }
+        if (name === './services/nativeBinderDrag') return execute('src/services/nativeBinderDrag.ts')
         if (name === './services/storage') return execute('src/services/storage.ts')
         if (name === './services/latestRequest') return execute('src/services/latestRequest.ts')
         if (name === 'react') return {

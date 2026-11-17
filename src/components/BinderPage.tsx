@@ -1,10 +1,12 @@
-import type { PointerEvent } from 'react'
+import type { DragEvent, PointerEvent } from 'react'
 import type { BinderPage as BinderPageType } from '../types/PokemonCards'
 interface BinderPageProps {
   page: BinderPageType
   onSlotClick?: (slotId: string) => void
-  onDragStart?: (slotId: string) => void
-  onDrop?: (slotId: string) => void
+  onDragStart?: (slotId: string, event: DragEvent<HTMLButtonElement>) => void
+  onDragEnd?: () => void
+  onDragOver?: (event: DragEvent<HTMLButtonElement>) => void
+  onDrop?: (slotId: string, event: DragEvent<HTMLButtonElement>) => void
   isPreviewMode?: boolean
   isRearrangeMode?: boolean
   highlightedSlotId: string | null
@@ -17,6 +19,8 @@ function BinderPage({
      page,
     onSlotClick,
     onDragStart,
+    onDragEnd,
+    onDragOver,
     onDrop,
     isPreviewMode = false,
     isRearrangeMode = false,
@@ -110,19 +114,22 @@ function BinderPage({
 
 
             draggable={Boolean(slot.card) && !isPreviewMode}
-            onDragStart={() => {
+            onDragStart={(event) => {
                 if (slot.card && !isPreviewMode) {
-                    onDragStart?.(slot.id)
+                    onDragStart?.(slot.id, event)
                 }
             }}
+            onDragEnd={onDragEnd}
             onDragOver={(event) => {
                 if (!isPreviewMode) {
                     event.preventDefault()
+                    onDragOver?.(event)
                 }
             }}
-            onDrop={() => {
+            onDrop={(event) => {
                 if (!isPreviewMode) {
-                    onDrop?.(slot.id)
+                    event.preventDefault()
+                    onDrop?.(slot.id, event)
                 }
                 }}
           >

@@ -1,3 +1,5 @@
+import { createNativeBinderDrag } from './services/nativeBinderDrag'
+import type { DragEvent } from 'react'
 import AccessibilityStatus from './components/AccessibilityStatus'
 import { binderViewLabel } from './services/accessibility'
 import AccessibleDialog from './components/AccessibleDialog'
@@ -158,6 +160,7 @@ const [renamePageValue, setRenamePageValue] =
 
   const [draggedSlotId, setDraggedSlotId] =
   useState<string | null>(null)
+  const [nativeBinderDrag] = useState(createNativeBinderDrag)
   const [moveSource, setMoveSource] = useState<{ slotId: string; card: BinderCard } | null>(null)
   const [isPreviewMode, setIsPreviewMode] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -398,9 +401,58 @@ async function handleToggleFullscreen() {
   }
 }
 
-function handleBinderDragStart(slotId: string) {
+function handleBinderDragStart(slotId: string, event: DragEvent<HTMLButtonElement>) {
+  const source = binderPages.flatMap(page => page.slots).find(slot => slot.id === slotId)
+  if (!source?.card || !nativeBinderDrag.start(slotId, event.dataTransfer, event.currentTarget)) {
+    handleBinderDragEnd()
+    event.preventDefault()
+    return
+  }
+  event.dataTransfer.effectAllowed = 'move'
   setDraggedSlotId(slotId)
 }
+
+function handleBinderDragEnd() {
+  nativeBinderDrag.end()
+  setDraggedSlotId(null)
+}
+
+function handleNativeBinderDragOver(event: DragEvent<HTMLButtonElement>) {
+  // Handle foreign drops too, so the browser cannot navigate to a dropped URL.
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = nativeBinderDrag.accepts(event.dataTransfer) ? 'move' : 'none'
+  }
+}
+
+function handleNativeBinderDrop(targetSlotId: string, event: DragEvent<HTMLButtonElement>) {
+  event.preventDefault()
+  const sourceSlotId = nativeBinderDrag.take(event.dataTransfer)
+  try {
+    if (sourceSlotId) handleBinderDrop(targetSlotId, sourceSlotId)
+  } finally { handleBinderDragEnd() }
+}
+
+useEffect(() => {
+  function cancel() {
+    nativeBinderDrag.end()
+    setDraggedSlotId(null)
+  }
+  function escape(event: KeyboardEvent) { if (event.key === 'Escape') cancel() }
+  function hidden() { if (document.hidden) cancel() }
+  // Capture dragend even if its source has moved outside the binder subtree.
+  window.addEventListener('dragend', cancel, true)
+  window.addEventListener('keydown', escape, true)
+  window.addEventListener('blur', cancel)
+  document.addEventListener('visibilitychange', hidden)
+  return () => {
+    window.removeEventListener('dragend', cancel, true)
+    window.removeEventListener('keydown', escape, true)
+    window.removeEventListener('blur', cancel)
+    document.removeEventListener('visibilitychange', hidden)
+    nativeBinderDrag.end()
+  }
+}, [nativeBinderDrag])
 
 function handleBinderDrop(
   targetSlotId: string,
@@ -1019,7 +1071,9 @@ return (
           rightPage={rightPage}
           onSlotClick={handleBinderSlotClick}
           onDragStart={handleBinderDragStart}
-          onDrop={handleBinderDrop}
+          onDragEnd={handleBinderDragEnd}
+          onDragOver={handleNativeBinderDragOver}
+          onDrop={handleNativeBinderDrop}
           onTouchCardDrop={(sourceSlotId, targetSlotId) => {
             handleBinderDrop(targetSlotId, sourceSlotId)
           }}

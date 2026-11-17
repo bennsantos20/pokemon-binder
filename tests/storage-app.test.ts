@@ -19,6 +19,7 @@ function mountApp(initial: Record<string, string>, unavailable = false, writeFai
     setItem(key: string, value: string) { if (writeFailure) throw Error('Quota'); writes.push(key); data.set(key, value) },
   }
   const window = {
+    addEventListener() {}, removeEventListener() {},
     localStorage: storage,
     matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
   }
@@ -31,6 +32,7 @@ function mountApp(initial: Record<string, string>, unavailable = false, writeFai
       exports, window, document: { addEventListener() {}, removeEventListener() {} },
       require(name: string) {
         if (name === './services/accessibility') return execute('src/services/accessibility.ts')
+        if (name === './services/nativeBinderDrag') return execute('src/services/nativeBinderDrag.ts')
         if (name === './services/storage') return execute('src/services/storage.ts')
         if (name === './services/latestRequest') return execute('src/services/latestRequest.ts')
         if (name === 'react') return {

@@ -1,14 +1,16 @@
 import type { BinderPage as BinderPageType } from '../types/PokemonCards'
 import BinderPage from './BinderPage'
 import { useEffect, useRef, useState } from 'react'
-import type { PointerEvent } from 'react'
+import type { DragEvent, PointerEvent } from 'react'
 
 interface BinderSpreadProps {
   leftPage?: BinderPageType
   rightPage?: BinderPageType
   onSlotClick?: (slotId: string) => void
-  onDragStart?: (slotId: string) => void
-  onDrop?: (slotId: string) => void
+  onDragStart?: (slotId: string, event: DragEvent<HTMLButtonElement>) => void
+  onDragEnd?: () => void
+  onDragOver?: (event: DragEvent<HTMLButtonElement>) => void
+  onDrop?: (slotId: string, event: DragEvent<HTMLButtonElement>) => void
   onTouchCardDrop?: (sourceSlotId: string, targetSlotId: string) => void
   isPreviewMode?: boolean
   isRearrangeMode?: boolean
@@ -27,6 +29,8 @@ function BinderSpread({
   rightPage,
   onSlotClick,
   onDragStart,
+  onDragEnd,
+  onDragOver,
   onDrop,
   onTouchCardDrop,
   isPreviewMode = false,
@@ -170,6 +174,8 @@ function BinderSpread({
           page={leftPage}
           onSlotClick={onSlotClick}
           onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onDragOver={onDragOver}
           onDrop={onDrop}
           onTouchCardStart={startTouchDrag}
           isPreviewMode={isPreviewMode}
@@ -203,6 +209,8 @@ function BinderSpread({
           page={rightPage}
           onSlotClick={onSlotClick}
           onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onDragOver={onDragOver}
           onDrop={onDrop}
           onTouchCardStart={startTouchDrag}
           isPreviewMode={isPreviewMode}
